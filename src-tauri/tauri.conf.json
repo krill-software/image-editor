@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Image",
+  "version": "0.1.0",
+  "identifier": "com.fippli.image",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Image",
+        "width": 1100,
+        "height": 760,
+        "minWidth": 640,
+        "minHeight": 420,
+        "decorations": false,
+        "resizable": true,
+        "center": true,
+        "backgroundColor": "#FAFAFF"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "plugins": {
+    "cli": {
+      "description": "A minimal image editor for Linux",
+      "args": [
+        {
+          "name": "file",
+          "index": 1,
+          "takesValue": true,
+          "description": "Path to an image file to open"
+        }
+      ]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "appimage"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png"
+    ],
+    "category": "GraphicsAndDesign",
+    "shortDescription": "Image editor",
+    "longDescription": "A minimal, single-file image editor for Linux. Open, crop, resize, rotate, filter, and export to PNG/JPEG/WebP/BMP/TIFF.",
+    "fileAssociations": [
+      {
+        "ext": ["png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff", "gif", "ico"],
+        "name": "Image",
+        "description": "Image file",
+        "mimeType": "image/png;image/jpeg;image/webp;image/bmp;image/tiff;image/gif;image/x-icon",
+        "role": "Editor"
+      }
+    ],
+    "linux": {
+      "deb": {
+        "section": "graphics",
+        "priority": "optional",
+        "desktopTemplate": "main.desktop"
+      },
+      "appimage": {
+        "bundleMediaFramework": false
+      }
+    }
+  }
+}
