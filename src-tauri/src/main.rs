@@ -1,5 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    fippli_image_lib::run();
+    krill_image_editor_lib::run();
 }

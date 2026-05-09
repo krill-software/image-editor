@@ -109,7 +109,7 @@ struct WindowState {
 
 fn state_path() -> Option<PathBuf> {
     let base = dirs::state_dir().or_else(dirs::data_local_dir)?;
-    Some(base.join("fippli-image").join("state.json"))
+    Some(base.join("krill-image-editor").join("state.json"))
 }
 
 #[tauri::command]

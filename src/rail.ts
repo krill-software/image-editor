@@ -9,6 +9,8 @@ export interface RailHandlers {
   rotate: (deg: 90 | 180 | 270) => void;
   flip: (axis: "h" | "v") => void;
   applyFilter: (name: FilterName, amount: number) => void;
+  setFilter: (name: FilterName, amount: number) => void;
+  clearFilters: () => void;
   applyResize: (w: number, h: number) => void;
   applyCrop: () => void;
   startCrop: () => void;
@@ -62,11 +64,7 @@ function renderDefault(el: HTMLElement, canvas: HTMLCanvasElement, h: RailHandle
   ]));
 
   el.appendChild(section("Filters", [
-    rowButtons([
-      btn("B / W",  () => h.applyFilter("grayscale", 1)),
-      btn("Sepia",  () => h.applyFilter("sepia", 1)),
-      btn("Invert", () => h.applyFilter("invert", 1)),
-    ]),
+    filterThumbs(h),
     slider("Brightness", "brightness", -100, 100, canvas, h),
     slider("Contrast",   "contrast",   -100, 100, canvas, h),
     slider("Saturation", "saturation", -100, 100, canvas, h),
@@ -238,6 +236,157 @@ function checkbox(label: string, checked: boolean): HTMLLabelElement {
   span.textContent = label;
   wrap.appendChild(i);
   wrap.appendChild(span);
+  return wrap;
+}
+
+type ThumbDef =
+  | { label: string; kind: "none" }
+  | { label: string; kind: "filter"; name: FilterName };
+
+const THUMB_DEFS: ThumbDef[] = [
+  { label: "None",   kind: "none" },
+  { label: "B / W",  kind: "filter", name: "grayscale" },
+  { label: "Sepia",  kind: "filter", name: "sepia" },
+  { label: "Invert", kind: "filter", name: "invert" },
+];
+
+const THUMB_SIZE = 64;
+
+interface Tile {
+  def: ThumbDef;
+  tile: HTMLElement;
+  canvas: HTMLCanvasElement;
+  range: HTMLInputElement | null;
+  strength: number;
+  setStrength(v: number): void;
+}
+
+function filterThumbs(h: RailHandlers): HTMLElement {
+  const wrap = document.createElement("div");
+  wrap.className = "filter-thumbs";
+
+  const tiles: Tile[] = THUMB_DEFS.map((def) => {
+    const tile = document.createElement("div");
+    tile.className = "filter-thumb";
+    tile.title = def.label;
+
+    const head = document.createElement("button");
+    head.type = "button";
+    head.className = "filter-thumb-head";
+
+    const c = document.createElement("canvas");
+    c.width = THUMB_SIZE; c.height = THUMB_SIZE;
+    c.className = "filter-thumb-canvas";
+
+    const lab = document.createElement("span");
+    lab.className = "filter-thumb-label";
+    lab.textContent = def.label;
+
+    head.appendChild(c);
+    head.appendChild(lab);
+    tile.appendChild(head);
+
+    let range: HTMLInputElement | null = null;
+    if (def.kind === "filter") {
+      range = document.createElement("input");
+      range.type = "range";
+      range.min = "0"; range.max = "100"; range.step = "1"; range.value = "100";
+      range.className = "filter-thumb-strength";
+      tile.appendChild(range);
+    }
+
+    const t: Tile = {
+      def, tile, canvas: c, range,
+      strength: 1,
+      setStrength(v: number) {
+        this.strength = v;
+        if (this.range) this.range.value = String(Math.round(v * 100));
+        if (def.kind === "filter") c.style.filter = cssFilterFor(def.name, v);
+      },
+    };
+    t.setStrength(1);
+
+    if (def.kind === "filter" && range) {
+      const r = range;
+      r.addEventListener("input", () => {
+        const v = (+r.value) / 100;
+        t.strength = v;
+        c.style.filter = cssFilterFor(def.name, v);
+      });
+      r.addEventListener("change", () => {
+        h.setFilter(def.name, (+r.value) / 100);
+      });
+    }
+
+    head.addEventListener("click", () => {
+      if (def.kind === "none") {
+        h.clearFilters();
+        return;
+      }
+      const isActive = doc.ops.some(
+        (o) => o.kind === "filter" && o.name === def.name,
+      );
+      if (isActive) {
+        h.setFilter(def.name, 0);
+      } else {
+        if (t.strength === 0) t.setStrength(1);
+        h.setFilter(def.name, t.strength);
+      }
+    });
+
+    wrap.appendChild(tile);
+    return t;
+  });
+
+  const paint = () => {
+    const activeNames = new Set(
+      doc.ops.filter((o) => o.kind === "filter").map((o) => o.name),
+    );
+    for (const t of tiles) {
+      if (t.def.kind === "filter") {
+        const def = t.def;
+        const op = doc.ops.find(
+          (o) => o.kind === "filter" && o.name === def.name,
+        );
+        if (op && op.kind === "filter") t.setStrength(op.amount);
+        else t.setStrength(1);
+      }
+      const isActive =
+        t.def.kind === "none"
+          ? activeNames.size === 0
+          : activeNames.has(t.def.name);
+      t.tile.classList.toggle("active", isActive);
+    }
+
+    const src = doc.rendered;
+    if (!src) {
+      for (const t of tiles) {
+        const ctx = t.canvas.getContext("2d")!;
+        ctx.clearRect(0, 0, THUMB_SIZE, THUMB_SIZE);
+      }
+      return;
+    }
+    const scale = Math.min(THUMB_SIZE / src.width, THUMB_SIZE / src.height);
+    const dw = Math.max(1, Math.round(src.width * scale));
+    const dh = Math.max(1, Math.round(src.height * scale));
+    const dx = Math.round((THUMB_SIZE - dw) / 2);
+    const dy = Math.round((THUMB_SIZE - dh) / 2);
+
+    const tmp = document.createElement("canvas");
+    tmp.width = src.width; tmp.height = src.height;
+    tmp.getContext("2d")!.putImageData(src, 0, 0);
+
+    for (const t of tiles) {
+      const ctx = t.canvas.getContext("2d")!;
+      ctx.clearRect(0, 0, THUMB_SIZE, THUMB_SIZE);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(tmp, dx, dy, dw, dh);
+    }
+  };
+
+  paint();
+  document.addEventListener("doc-changed", paint);
   return wrap;
 }
 

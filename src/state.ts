@@ -1,4 +1,4 @@
-import type { Op, OutputFormat } from "./types";
+import type { FilterName, Op, OutputFormat } from "./types";
 import { applyOps } from "./pipeline";
 
 export interface DocState {
@@ -44,6 +44,40 @@ export function setOriginal(img: ImageData, path: string | null, format: OutputF
   doc.future = [];
   rerender();
   doc.savedHash = hashOps(doc.ops);
+  notify();
+}
+
+export function setFilter(name: FilterName, amount: number) {
+  if (!doc.original) return;
+  const idx = doc.ops.findIndex((o) => o.kind === "filter" && o.name === name);
+  if (idx < 0 && amount === 0) return;
+  if (idx >= 0) {
+    const cur = doc.ops[idx];
+    if (cur.kind === "filter" && cur.amount === amount) return;
+  }
+  doc.history.push(doc.ops.slice());
+  doc.future.length = 0;
+  if (idx >= 0) {
+    if (amount === 0) {
+      doc.ops = doc.ops.filter((_, i) => i !== idx);
+    } else {
+      doc.ops = doc.ops.slice();
+      doc.ops[idx] = { kind: "filter", name, amount };
+    }
+  } else {
+    doc.ops = [...doc.ops, { kind: "filter", name, amount }];
+  }
+  rerender();
+  notify();
+}
+
+export function clearFilters() {
+  if (!doc.original) return;
+  if (!doc.ops.some((o) => o.kind === "filter")) return;
+  doc.history.push(doc.ops.slice());
+  doc.ops = doc.ops.filter((o) => o.kind !== "filter");
+  doc.future.length = 0;
+  rerender();
   notify();
 }
 

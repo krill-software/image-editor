@@ -42,7 +42,7 @@ Verify with `sha256sum -c SHA256SUMS`.
 ## Run from CLI
 
 ```sh
-fippli-image path/to/photo.jpg
+krill-image-editor path/to/photo.jpg
 ```
 
 Without an arg, opens an empty 800×600 white canvas.

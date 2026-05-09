@@ -20,8 +20,9 @@ A minimal, single-file Linux image editor. Open one image, apply a small set of 
 
 ## Stack
 
-- **Shell:** Tauri 2 (Rust backend + system webview). Mirrors markdown-editor.
+- **Shell:** Tauri 2 (Rust backend + system webview).
 - **Frontend:** TypeScript + Vite.
+- **Chrome + palette:** [`@krill-software/desktop-ui`](https://github.com/krill-software/desktop-ui) (git dep). Provides the locked-palette CSS bundle, custom titlebar, menu bar, and status line via `mountChrome()`.
 - **Preview / live edits:** `<canvas>` + Canvas2D. Fast enough for sliders up to ~20 MP, no shader toolchain.
 - **Decode / encode / final pixels:** Rust [`image`](https://crates.io/crates/image) crate (PNG, JPEG, WebP, BMP, TIFF, ICO). AVIF via [`image`](https://crates.io/crates/image) feature flag or deferred to v2.
 - **Geometry ops:** Rust-side for final output (exact rotate/resize with good resampling); Canvas2D for preview.
@@ -130,10 +131,10 @@ All filters commit on slider release; preview updates per frame via Canvas2D fil
 
 ## Linux integration
 
-- Binary name: `fippli-image`.
+- Binary name: `krill-image-editor`.
 - `.desktop` file with MIME types: `image/png`, `image/jpeg`, `image/webp`, `image/bmp`, `image/tiff`, `image/gif`, `image/x-icon`.
-- Config: `$XDG_CONFIG_HOME/fippli-image/config.toml` (empty in v1).
-- State: `$XDG_STATE_HOME/fippli-image/` — window geometry, recent files.
+- Config: `$XDG_CONFIG_HOME/krill-image-editor/config.toml` (empty in v1).
+- State: `$XDG_STATE_HOME/krill-image-editor/` — window geometry, recent files.
 - Distribution: AppImage primary; `.deb` secondary. Flatpak deferred.
 
 ## Out of scope / open questions

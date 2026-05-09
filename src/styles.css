@@ -1,94 +1,102 @@
+@font-face {
+  font-family: "Hasklig";
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url("/src/assets/fonts/Hasklig-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hasklig";
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url("/src/assets/fonts/Hasklig-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hasklig";
+  font-weight: 400;
+  font-style: italic;
+  font-display: block;
+  src: url("/src/assets/fonts/Hasklig-Italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hasklig";
+  font-weight: 700;
+  font-style: italic;
+  font-display: block;
+  src: url("/src/assets/fonts/Hasklig-BoldItalic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Charter";
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url("/src/assets/fonts/Charter-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Charter";
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url("/src/assets/fonts/Charter-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Charter";
+  font-weight: 400;
+  font-style: italic;
+  font-display: block;
+  src: url("/src/assets/fonts/Charter-Italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Charter";
+  font-weight: 700;
+  font-style: italic;
+  font-display: block;
+  src: url("/src/assets/fonts/Charter-BoldItalic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Inter";
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url("/src/assets/fonts/Inter-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+  src: url("/src/assets/fonts/Inter-SemiBold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url("/src/assets/fonts/Inter-Bold.woff2") format("woff2");
+}
+
+/* Image-editor app-specific tokens. The 5 named palette colors and
+ * Space-Cadet alpha rules come from @krill-software/desktop-ui. */
 :root {
-  --fm-bg: #FAFAFF;
-  --fm-text: #30343F;
-  --fm-muted: #878472;
-  --fm-accent: #DD7596;
-  --fm-accent-strong: #FF82BF;
-  --fm-rule: rgba(48, 52, 63, 0.08);
-  --fm-rule-strong: rgba(48, 52, 63, 0.16);
-  --fm-panel: #F2F2F7;
-  --fm-panel-2: #E8E8EE;
+  --fm-sans:  "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fm-serif: "Charter", Georgia, "Liberation Serif", serif;
+  --fm-mono:  "Hasklig", "Source Code Pro", "JetBrains Mono", ui-monospace, monospace;
 
   --rail-w: 260px;
 }
 
-* { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  height: 100%;
-  background: var(--fm-bg);
-  color: var(--fm-text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-size: 13px;
-  user-select: none;
-  overflow: hidden;
-}
+html, body { font-family: var(--fm-sans); }
 
 body {
   display: grid;
   grid-template-rows: auto 1fr auto;
 }
 
-button { font-family: inherit; }
-
 /* Titlebar ============================================================== */
 
-#titlebar {
-  display: flex;
-  align-items: stretch;
-  height: 32px;
-  background: var(--fm-panel);
-  border-bottom: 1px solid var(--fm-rule);
-}
-
-#titlebar-drag { flex: 1; }
-
-#menu-bar { display: flex; align-items: stretch; padding: 0 4px; }
-
-.menu-trigger {
-  background: transparent;
-  border: 0;
-  color: var(--fm-text);
-  padding: 0 10px;
-  font-size: 12px;
-  cursor: pointer;
-}
-.menu-trigger:hover, .menu-trigger[data-open="true"] { background: var(--fm-panel-2); }
-
-.menu-dropdown {
-  position: fixed;
-  z-index: 100;
-  background: var(--fm-bg);
-  border: 1px solid var(--fm-rule-strong);
-  box-shadow: 0 8px 24px rgba(48, 52, 63, 0.12);
-  border-radius: 6px;
-  padding: 4px;
-  min-width: 220px;
-}
-
-.menu-item {
-  display: flex; justify-content: space-between; align-items: center; gap: 24px;
-  width: 100%; text-align: left;
-  background: transparent; border: 0; color: var(--fm-text);
-  padding: 6px 10px; font-size: 12px; border-radius: 4px;
-  cursor: pointer;
-}
-.menu-item:hover { background: var(--fm-panel); }
-.menu-item-shortcut { color: var(--fm-muted); font-size: 11px; }
-.menu-separator { height: 1px; background: var(--fm-rule); margin: 4px 0; }
-
-#titlebar-controls { display: flex; }
-#titlebar-controls button {
-  width: 36px;
-  background: transparent; border: 0;
-  color: var(--fm-muted);
-  cursor: pointer;
-}
-#titlebar-controls button:hover { color: var(--fm-text); background: var(--fm-panel-2); }
-#titlebar-close:hover { background: var(--fm-accent); color: var(--fm-bg); }
-
-/* Main layout =========================================================== */
 
 #app {
   display: grid;
@@ -96,15 +104,16 @@ button { font-family: inherit; }
   min-height: 0;
 }
 
-/* Light-theme transparency checkerboard. */
+/* Light-theme transparency checkerboard. The dark squares are
+ * alpha-Space-Cadet over Ghost White — palette-derived. */
 #canvas-root {
   position: relative;
   overflow: hidden;
   background:
-    linear-gradient(45deg, #E8E8EE 25%, transparent 25%) 0 0 / 16px 16px,
-    linear-gradient(-45deg, #E8E8EE 25%, transparent 25%) 0 8px / 16px 16px,
-    linear-gradient(45deg, transparent 75%, #E8E8EE 75%) 8px -8px / 16px 16px,
-    linear-gradient(-45deg, transparent 75%, #E8E8EE 75%) 8px 0 / 16px 16px,
+    linear-gradient(45deg,  rgba(48,52,63,0.08) 25%, transparent 25%) 0 0 / 16px 16px,
+    linear-gradient(-45deg, rgba(48,52,63,0.08) 25%, transparent 25%) 0 8px / 16px 16px,
+    linear-gradient(45deg,  transparent 75%, rgba(48,52,63,0.08) 75%) 8px -8px / 16px 16px,
+    linear-gradient(-45deg, transparent 75%, rgba(48,52,63,0.08) 75%) 8px 0 / 16px 16px,
     var(--fm-bg);
 }
 
@@ -144,7 +153,7 @@ button { font-family: inherit; }
 /* Right rail =========================================================== */
 
 #rail {
-  background: var(--fm-panel);
+  background: var(--fm-bg);
   border-left: 1px solid var(--fm-rule);
   overflow: auto;
   padding: 12px;
@@ -184,7 +193,7 @@ button { font-family: inherit; }
 }
 .rail-btn:hover {
   border-color: var(--fm-muted);
-  background: var(--fm-panel-2);
+  background: var(--fm-rule);
 }
 .rail-btn.primary {
   background: var(--fm-accent);
@@ -229,6 +238,112 @@ button { font-family: inherit; }
 }
 .checkbox input { accent-color: var(--fm-accent); }
 
+.filter-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.filter-thumb {
+  display: flex;
+  flex-direction: column;
+  background: var(--fm-bg);
+  border: 1px solid var(--fm-rule-strong);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.filter-thumb:hover { border-color: var(--fm-muted); }
+.filter-thumb.active {
+  border-color: var(--fm-accent);
+  box-shadow: 0 0 0 1px var(--fm-accent) inset;
+}
+.filter-thumb.active .filter-thumb-label {
+  color: var(--fm-text);
+  font-weight: 600;
+}
+
+.filter-thumb-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 4px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.filter-thumb-head:hover { background: var(--fm-rule); }
+
+.filter-thumb-strength {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  margin: 0;
+  background: var(--fm-rule);
+  border-top: 1px solid var(--fm-rule);
+  cursor: pointer;
+}
+.filter-thumb-strength::-webkit-slider-runnable-track {
+  height: 6px;
+  background: linear-gradient(
+    to right,
+    var(--fm-accent) 0%,
+    var(--fm-accent) calc((var(--val, 100) - 0) * 1%),
+    transparent calc((var(--val, 100) - 0) * 1%),
+    transparent 100%
+  );
+}
+.filter-thumb-strength::-moz-range-track {
+  height: 6px;
+  background: var(--fm-rule);
+}
+.filter-thumb-strength::-moz-range-progress {
+  height: 6px;
+  background: var(--fm-accent);
+}
+.filter-thumb-strength::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  margin-top: -2px;
+  border-radius: 50%;
+  background: var(--fm-bg);
+  border: 1px solid var(--fm-accent);
+  cursor: pointer;
+}
+.filter-thumb-strength::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--fm-bg);
+  border: 1px solid var(--fm-accent);
+  cursor: pointer;
+}
+.filter-thumb-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  background:
+    linear-gradient(45deg, rgba(48,52,63,0.08) 25%, transparent 25%) 0 0 / 8px 8px,
+    linear-gradient(-45deg, rgba(48,52,63,0.08) 25%, transparent 25%) 0 4px / 8px 8px,
+    linear-gradient(45deg, transparent 75%, rgba(48,52,63,0.08) 75%) 4px -4px / 8px 8px,
+    linear-gradient(-45deg, transparent 75%, rgba(48,52,63,0.08) 75%) 4px 0 / 8px 8px,
+    var(--fm-bg);
+  border-radius: 3px;
+}
+.filter-thumb-label {
+  font-size: 10.5px;
+  color: var(--fm-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .slider {
   margin-bottom: 8px;
 }
@@ -253,7 +368,7 @@ button { font-family: inherit; }
   align-items: center;
   gap: 16px;
   padding: 4px 12px;
-  background: var(--fm-panel);
+  background: var(--fm-bg);
   border-top: 1px solid var(--fm-rule);
   color: var(--fm-muted);
   font-size: 11px;

@@ -73,7 +73,7 @@ jobs:
 
             ```sh
             sudo dpkg -i Image_*_amd64.deb
-            fippli-image path/to/photo.jpg
+            krill-image path/to/photo.jpg
             ```
 
             Verify with `sha256sum -c SHA256SUMS`.

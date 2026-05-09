@@ -96,45 +96,7 @@ function resize(src: ImageData, tw: number, th: number): ImageData {
 }
 
 function applyFilter(src: ImageData, name: FilterName, amount: number): ImageData {
-  switch (name) {
-    case "grayscale":
-      return perPixel(src, (r, g, b, a) => {
-        const y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        return [y, y, y, a];
-      });
-    case "sepia":
-      return perPixel(src, (r, g, b, a) => [
-        clamp(0.393 * r + 0.769 * g + 0.189 * b),
-        clamp(0.349 * r + 0.686 * g + 0.168 * b),
-        clamp(0.272 * r + 0.534 * g + 0.131 * b),
-        a,
-      ]);
-    case "invert":
-      return perPixel(src, (r, g, b, a) => [255 - r, 255 - g, 255 - b, a]);
-    case "brightness":
-    case "contrast":
-    case "saturation":
-    case "blur":
-      return canvasFilter(src, cssFilterFor(name, amount));
-  }
-}
-
-function clamp(v: number): number {
-  return v < 0 ? 0 : v > 255 ? 255 : v;
-}
-
-function perPixel(
-  src: ImageData,
-  fn: (r: number, g: number, b: number, a: number) => [number, number, number, number],
-): ImageData {
-  const out = new ImageData(src.width, src.height);
-  const s = src.data;
-  const d = out.data;
-  for (let i = 0; i < s.length; i += 4) {
-    const [r, g, b, a] = fn(s[i], s[i + 1], s[i + 2], s[i + 3]);
-    d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = a;
-  }
-  return out;
+  return canvasFilter(src, cssFilterFor(name, amount));
 }
 
 function canvasFilter(src: ImageData, filter: string): ImageData {
@@ -151,14 +113,18 @@ function canvasFilter(src: ImageData, filter: string): ImageData {
   return ctx.getImageData(0, 0, src.width, src.height);
 }
 
+function clamp01(v: number): number {
+  return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
 export function cssFilterFor(name: FilterName, amount: number): string {
   switch (name) {
     case "brightness": return `brightness(${1 + amount / 100})`;
     case "contrast": return `contrast(${1 + amount / 100})`;
     case "saturation": return `saturate(${1 + amount / 100})`;
     case "blur": return `blur(${Math.max(0, amount)}px)`;
-    case "grayscale": return "grayscale(1)";
-    case "sepia": return "sepia(1)";
-    case "invert": return "invert(1)";
+    case "grayscale": return `grayscale(${clamp01(amount)})`;
+    case "sepia": return `sepia(${clamp01(amount)})`;
+    case "invert": return `invert(${clamp01(amount)})`;
   }
 }

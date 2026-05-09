@@ -1,3 +1,7 @@
+import "@krill-software/desktop-ui/styles";
+import "./styles.css";
+
+import { mountChrome, type MenuDef } from "@krill-software/desktop-ui";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalPosition, LogicalSize } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -14,15 +18,16 @@ import {
   save,
   saveAs,
 } from "./io";
-import { installMenuBar, type MenuDef } from "./menu";
 import { createRail, type RailHandlers } from "./rail";
 import {
   canRedo,
   canUndo,
+  clearFilters,
   doc,
   isDirty,
   pushOp,
   redo,
+  setFilter,
   subscribe,
   undo,
 } from "./state";
@@ -34,11 +39,11 @@ const UNTITLED = "untitled.png";
 const persisted: { window?: { width: number; height: number; x: number; y: number } } = {};
 let saveStateTimer: number | undefined;
 
-const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-const stage = document.getElementById("canvas-stage") as HTMLDivElement;
-const root = document.getElementById("canvas-root") as HTMLDivElement;
-const overlay = document.getElementById("canvas-overlay") as HTMLDivElement;
-const railEl = document.getElementById("rail") as HTMLElement;
+let canvas: HTMLCanvasElement;
+let stage: HTMLDivElement;
+let root: HTMLDivElement;
+let overlay: HTMLDivElement;
+let railEl: HTMLElement;
 
 let viewport: Viewport;
 let crop: ReturnType<typeof createCropTool>;
@@ -62,7 +67,7 @@ function repaintCanvas() {
 function updateTitle() {
   const name = doc.path ? basename(doc.path) : UNTITLED;
   const mark = isDirty() ? " •" : "";
-  const label = `${name}${mark} — Image`;
+  const label = `${name}${mark} — Image Editor`;
   document.title = label;
   getCurrentWindow().setTitle(label).catch(() => {});
 }
@@ -126,7 +131,7 @@ function cancelTool() {
 }
 
 const handlers: RailHandlers = {
-  rotate, flip, applyFilter, applyResize,
+  rotate, flip, applyFilter, setFilter, clearFilters, applyResize,
   applyCrop, startCrop, startResize, cancelTool,
 };
 
@@ -206,19 +211,42 @@ function buildMenus(): MenuDef[] {
   ];
 }
 
-function installTitlebar() {
-  const w = getCurrentWindow();
-  const bind = (id: string, handler: () => void | Promise<void>) => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener("click", (e) => { e.preventDefault(); void handler(); });
-  };
-  bind("titlebar-min", () => w.minimize());
-  bind("titlebar-max", async () => (await w.isMaximized()) ? w.unmaximize() : w.maximize());
-  bind("titlebar-close", () => w.close());
-  const drag = document.getElementById("titlebar-drag");
-  if (drag) drag.addEventListener("dblclick", async () =>
-    (await w.isMaximized()) ? w.unmaximize() : w.maximize(),
-  );
+/** Build the body chrome via desktop-ui's mountChrome and graft the
+ *  app's working view (canvas-root / canvas-stage / canvas / overlay /
+ *  rail) and the four status-line spans into the structure. */
+function initChrome() {
+  const chrome = mountChrome({
+    productName: "Image Editor",
+    menus: buildMenus(),
+    showStatusLine: true,
+  });
+  chrome.viewport.id = "app";
+
+  root = document.createElement("section") as HTMLDivElement; // <section>, typed as div for legacy compat
+  root.id = "canvas-root";
+  stage = document.createElement("div") as HTMLDivElement;
+  stage.id = "canvas-stage";
+  canvas = document.createElement("canvas") as HTMLCanvasElement;
+  canvas.id = "canvas";
+  overlay = document.createElement("div") as HTMLDivElement;
+  overlay.id = "canvas-overlay";
+  stage.appendChild(canvas);
+  stage.appendChild(overlay);
+  root.appendChild(stage);
+  chrome.viewport.appendChild(root);
+
+  railEl = document.createElement("aside");
+  railEl.id = "rail";
+  railEl.setAttribute("aria-label", "Tools");
+  chrome.viewport.appendChild(railEl);
+
+  const sl = chrome.statusLine!;
+  for (const id of ["status-name", "status-dirty", "status-dims", "status-zoom"]) {
+    const span = document.createElement("span");
+    span.id = id;
+    if (id === "status-dirty") span.setAttribute("aria-hidden", "true");
+    sl.appendChild(span);
+  }
 }
 
 function installKeybindings() {
@@ -341,6 +369,8 @@ async function boot() {
     if (loaded) Object.assign(persisted, loaded);
   } catch { /* no prior state */ }
 
+  initChrome();
+
   viewport = createViewport(root, stage, canvas);
   crop = createCropTool(overlay, canvas, viewport);
   rail = createRail(railEl, canvas, crop, handlers);
@@ -353,9 +383,6 @@ async function boot() {
     refreshUndoRedoMenuState();
   });
 
-  installTitlebar();
-  const menuContainer = document.getElementById("menu-bar");
-  if (menuContainer) installMenuBar(menuContainer, buildMenus());
   installKeybindings();
   await installWindowPersistence();
   await installFileDrop();

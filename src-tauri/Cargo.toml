@@ -1,5 +1,5 @@
 [package]
-name = "fippli-image"
+name = "krill-image-editor"
 version = "0.1.0"
 description = "A minimal image editor for Linux"
 authors = ["Filip"]
@@ -8,7 +8,7 @@ rust-version = "1.77"
 license = "MIT"
 
 [lib]
-name = "fippli_image_lib"
+name = "krill_image_editor_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
