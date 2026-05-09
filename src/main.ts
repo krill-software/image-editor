@@ -44,6 +44,7 @@ let stage: HTMLDivElement;
 let root: HTMLDivElement;
 let overlay: HTMLDivElement;
 let railEl: HTMLElement;
+let titleEl: HTMLElement;
 
 let viewport: Viewport;
 let crop: ReturnType<typeof createCropTool>;
@@ -67,6 +68,7 @@ function repaintCanvas() {
 function updateTitle() {
   const name = doc.path ? basename(doc.path) : UNTITLED;
   const mark = isDirty() ? " •" : "";
+  if (titleEl) titleEl.textContent = name;
   const label = `${name}${mark} — Image Editor`;
   document.title = label;
   getCurrentWindow().setTitle(label).catch(() => {});
@@ -211,6 +213,7 @@ function initChrome() {
     showAuxPane: true,
     showStatusLine: true,
   });
+  titleEl = chrome.title;
 
   // MAIN (right) — the canvas-root + stage + canvas + overlay tree.
   root = document.createElement("section") as HTMLDivElement; // <section>, typed as div for legacy compat
