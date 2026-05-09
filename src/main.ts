@@ -1,7 +1,7 @@
 import "@krill-software/desktop-ui/styles";
 import "./styles.css";
 
-import { mountChrome, type MenuDef } from "@krill-software/desktop-ui";
+import { mountChrome } from "@krill-software/desktop-ui";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalPosition, LogicalSize } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -142,74 +142,13 @@ function togglePreview() {
   requestAnimationFrame(() => viewport.onCanvasResized());
 }
 
-function buildMenus(): MenuDef[] {
-  const exportFmt = (fmt: OutputFormat) => () => void exportAs({
-    format: fmt,
-    quality: fmt === "jpeg" ? 90 : undefined,
-    background: fmt === "jpeg" ? [255, 255, 255] : undefined,
-  });
-  return [
-    {
-      label: "File",
-      items: [
-        { label: "New",       shortcut: "Ctrl+N",       action: () => void newFile() },
-        { label: "Open…",     shortcut: "Ctrl+O",       action: () => void openViaDialog() },
-        { sep: true },
-        { label: "Save",      shortcut: "Ctrl+S",       action: () => void save() },
-        { label: "Save As…",  shortcut: "Ctrl+Shift+S", action: () => void saveAs() },
-        { sep: true },
-        { label: "Export PNG…",  action: exportFmt("png")  },
-        { label: "Export JPEG…", action: exportFmt("jpeg") },
-        { label: "Export WebP…", action: exportFmt("webp") },
-        { label: "Export BMP…",  action: exportFmt("bmp")  },
-        { label: "Export TIFF…", action: exportFmt("tiff") },
-        { label: "Export ICO…",  action: exportFmt("ico")  },
-        { sep: true },
-        { label: "Quit",      shortcut: "Ctrl+Q",       action: () => void getCurrentWindow().close() },
-      ],
-    },
-    {
-      label: "Edit",
-      items: [
-        { label: "Undo", shortcut: "Ctrl+Z",       action: () => undo() },
-        { label: "Redo", shortcut: "Ctrl+Shift+Z", action: () => redo() },
-      ],
-    },
-    {
-      label: "Image",
-      items: [
-        { label: "Resize…",            action: startResize },
-        { label: "Crop…",              action: startCrop },
-        { sep: true },
-        { label: "Rotate Right (90°)", shortcut: "Ctrl+R",       action: () => rotate(90) },
-        { label: "Rotate Left (90°)",  shortcut: "Ctrl+Shift+R", action: () => rotate(270) },
-        { label: "Rotate 180°",        action: () => rotate(180) },
-        { sep: true },
-        { label: "Flip Horizontal",    shortcut: "H",            action: () => flip("h") },
-        { label: "Flip Vertical",      shortcut: "V",            action: () => flip("v") },
-      ],
-    },
-    {
-      label: "Filter",
-      items: [
-        { label: "Black & White", action: () => applyFilter("grayscale", 1) },
-        { label: "Sepia",          action: () => applyFilter("sepia", 1) },
-        { label: "Invert",         action: () => applyFilter("invert", 1) },
-      ],
-    },
-    {
-      label: "View",
-      items: [
-        { label: "Zoom In",    shortcut: "Ctrl+=", action: () => viewport.zoomBy(1.25) },
-        { label: "Zoom Out",   shortcut: "Ctrl+-", action: () => viewport.zoomBy(0.8) },
-        { label: "Fit",        shortcut: "Ctrl+0", action: () => viewport.fitToWindow() },
-        { label: "100%",       shortcut: "Ctrl+1", action: () => viewport.setZoom(1) },
-        { sep: true },
-        { label: "Preview Mode", shortcut: "F",     action: togglePreview },
-      ],
-    },
-  ];
-}
+// Canonical actions are passed inline to mountChrome; app-specific items
+// (Export, Image ops, Filters, Preview Mode) come via customMenu.
+const exportFmt = (fmt: OutputFormat) => () => void exportAs({
+  format: fmt,
+  quality: fmt === "jpeg" ? 90 : undefined,
+  background: fmt === "jpeg" ? [255, 255, 255] : undefined,
+});
 
 /** Build the body chrome via desktop-ui's mountChrome and graft the
  *  app's working view (canvas-root / canvas-stage / canvas / overlay /
@@ -217,7 +156,59 @@ function buildMenus(): MenuDef[] {
 function initChrome() {
   const chrome = mountChrome({
     productName: "Image Editor",
-    menus: buildMenus(),
+    actions: {
+      "new":         () => void newFile(),
+      "open":        () => void openViaDialog(),
+      "save":        () => void save(),
+      "save-as":     () => void saveAs(),
+      "undo":        () => undo(),
+      "redo":        () => redo(),
+      "zoom-in":     () => viewport.zoomBy(1.25),
+      "zoom-out":    () => viewport.zoomBy(0.8),
+      "zoom-fit":    () => viewport.fitToWindow(),
+      "zoom-actual": () => viewport.setZoom(1),
+    },
+    customMenu: [
+      {
+        group: "file",
+        items: [
+          { label: "Export PNG…",  action: exportFmt("png")  },
+          { label: "Export JPEG…", action: exportFmt("jpeg") },
+          { label: "Export WebP…", action: exportFmt("webp") },
+          { label: "Export BMP…",  action: exportFmt("bmp")  },
+          { label: "Export TIFF…", action: exportFmt("tiff") },
+          { label: "Export ICO…",  action: exportFmt("ico")  },
+        ],
+      },
+      {
+        group: "image",
+        items: [
+          { label: "Resize…",             action: startResize },
+          { label: "Crop…",               action: startCrop },
+          { sep: true },
+          { label: "Rotate right (90°)",  shortcut: "Ctrl+R",       action: () => rotate(90) },
+          { label: "Rotate left (90°)",   shortcut: "Ctrl+Shift+R", action: () => rotate(270) },
+          { label: "Rotate 180°",         action: () => rotate(180) },
+          { sep: true },
+          { label: "Flip horizontal",     shortcut: "H",            action: () => flip("h") },
+          { label: "Flip vertical",       shortcut: "V",            action: () => flip("v") },
+        ],
+      },
+      {
+        group: "filter",
+        items: [
+          { label: "Black & white", action: () => applyFilter("grayscale", 1) },
+          { label: "Sepia",         action: () => applyFilter("sepia", 1) },
+          { label: "Invert",        action: () => applyFilter("invert", 1) },
+        ],
+      },
+      {
+        group: "view",
+        items: [
+          { label: "Preview mode", shortcut: "F", action: togglePreview },
+        ],
+      },
+    ],
     showStatusLine: true,
   });
   chrome.viewport.id = "app";
@@ -249,67 +240,22 @@ function initChrome() {
   }
 }
 
-function installKeybindings() {
-  const mac = navigator.platform.toLowerCase().includes("mac");
+// Esc cancels in-progress tools (preview mode, crop) — the canonical
+// action registry doesn't cover that since it's app-mode-aware.
+function installEscapeHandler() {
   window.addEventListener("keydown", (e) => {
-    // Allow Esc to cancel active tool / preview
-    if (e.key === "Escape") {
-      if (document.body.dataset.mode === "preview") {
-        document.body.dataset.mode = "edit";
-        requestAnimationFrame(() => viewport.onCanvasResized());
-        e.preventDefault();
-        return;
-      }
-      if (crop.isActive()) {
-        cancelTool();
-        e.preventDefault();
-        return;
-      }
-    }
-
-    if (isTextTarget(e.target)) return;
-
-    if (e.key.toLowerCase() === "f" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      togglePreview();
+    if (e.key !== "Escape") return;
+    if (document.body.dataset.mode === "preview") {
+      document.body.dataset.mode = "edit";
+      requestAnimationFrame(() => viewport.onCanvasResized());
       e.preventDefault();
       return;
     }
-    if (e.key.toLowerCase() === "h" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
-      flip("h"); e.preventDefault(); return;
+    if (crop.isActive()) {
+      cancelTool();
+      e.preventDefault();
     }
-    if (e.key.toLowerCase() === "v" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
-      flip("v"); e.preventDefault(); return;
-    }
-
-    const mod = mac ? e.metaKey : e.ctrlKey;
-    if (!mod || e.altKey) return;
-    const k = e.key.toLowerCase();
-    const shift = e.shiftKey;
-    let handled = true;
-    if (k === "s" && !shift) void save();
-    else if (k === "s" && shift) void saveAs();
-    else if (k === "o" && !shift) void openViaDialog();
-    else if (k === "n" && !shift) void newFile();
-    else if (k === "q" && !shift) void getCurrentWindow().close();
-    else if (k === "z" && !shift) undo();
-    else if (k === "z" && shift) redo();
-    else if (k === "y" && !shift) redo();
-    else if (k === "r" && !shift) rotate(90);
-    else if (k === "r" && shift) rotate(270);
-    else if (k === "=" || k === "+") viewport.zoomBy(1.25);
-    else if (k === "-") viewport.zoomBy(0.8);
-    else if (k === "0") viewport.fitToWindow();
-    else if (k === "1") viewport.setZoom(1);
-    else if (k === "e" && !shift) handled = false; // reserved for export menu
-    else handled = false;
-    if (handled) { e.preventDefault(); e.stopImmediatePropagation(); }
   }, { capture: true });
-}
-
-function isTextTarget(t: EventTarget | null): boolean {
-  if (!(t instanceof HTMLElement)) return false;
-  const tag = t.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || t.isContentEditable;
 }
 
 function schedulePersist() {
@@ -383,7 +329,7 @@ async function boot() {
     refreshUndoRedoMenuState();
   });
 
-  installKeybindings();
+  installEscapeHandler();
   await installWindowPersistence();
   await installFileDrop();
 
