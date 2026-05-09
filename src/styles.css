@@ -95,14 +95,8 @@ body {
   grid-template-rows: auto 1fr auto;
 }
 
-/* Titlebar ============================================================== */
-
-
-#app {
-  display: grid;
-  grid-template-columns: 1fr var(--rail-w);
-  min-height: 0;
-}
+/* Body grid (titlebar / aux+main / status) is owned by the package.
+ * The rail goes in #aux (left), canvas in #viewport (right). */
 
 /* Light-theme transparency checkerboard. The dark squares are
  * alpha-Space-Cadet over Ghost White — palette-derived. */
@@ -150,12 +144,11 @@ body {
   cursor: move;
 }
 
-/* Right rail =========================================================== */
+/* Tool rail — lives in the AUX pane (left) provided by desktop-ui. The pane
+ * background and its right-edge rule are package-owned; only the inner
+ * layout is here. */
 
-#rail {
-  background: var(--fm-bg);
-  border-left: 1px solid var(--fm-rule);
-  overflow: auto;
+#aux {
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -361,30 +354,18 @@ body {
   font-size: 12px; color: var(--fm-muted);
 }
 
-/* Status line ========================================================== */
-
-#status-line {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 4px 12px;
-  background: var(--fm-bg);
-  border-top: 1px solid var(--fm-rule);
-  color: var(--fm-muted);
-  font-size: 11px;
-  height: 22px;
-}
-#status-dirty[data-dirty="true"]::before {
-  content: "•";
-  color: var(--fm-accent);
-}
+/* Status line + dirty marker are package-owned. */
 
 /* Preview mode ========================================================= */
 
 body[data-mode="preview"] #titlebar,
-body[data-mode="preview"] #rail,
+body[data-mode="preview"] #aux,
 body[data-mode="preview"] #status-line { display: none; }
-body[data-mode="preview"] #app { grid-template-columns: 1fr; }
+body[data-mode="preview"] {
+  grid-template-columns: 1fr;
+  grid-template-areas: "main";
+  grid-template-rows: 1fr;
+}
 body[data-mode="preview"] #canvas-root {
   background: var(--fm-text);
 }

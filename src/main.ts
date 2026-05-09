@@ -75,8 +75,7 @@ function updateTitle() {
 function updateStatus() {
   const name = doc.path ? basename(doc.path) : UNTITLED;
   set("status-name", name);
-  const dirty = document.getElementById("status-dirty");
-  if (dirty) dirty.dataset.dirty = String(isDirty());
+  document.body.dataset.dirty = String(isDirty());
   const dims = doc.rendered ? `${doc.rendered.width} × ${doc.rendered.height}` : "";
   set("status-dims", dims);
   set("status-zoom", doc.rendered ? `${Math.round(viewport.zoom() * 100)}%` : "");
@@ -209,10 +208,11 @@ function initChrome() {
         ],
       },
     ],
+    showAuxPane: true,
     showStatusLine: true,
   });
-  chrome.viewport.id = "app";
 
+  // MAIN (right) — the canvas-root + stage + canvas + overlay tree.
   root = document.createElement("section") as HTMLDivElement; // <section>, typed as div for legacy compat
   root.id = "canvas-root";
   stage = document.createElement("div") as HTMLDivElement;
@@ -226,18 +226,26 @@ function initChrome() {
   root.appendChild(stage);
   chrome.viewport.appendChild(root);
 
-  railEl = document.createElement("aside");
-  railEl.id = "rail";
+  // AUX (left) — tool rail.
+  railEl = chrome.aux!;
   railEl.setAttribute("aria-label", "Tools");
-  chrome.viewport.appendChild(railEl);
 
-  const sl = chrome.statusLine!;
-  for (const id of ["status-name", "status-dirty", "status-dims", "status-zoom"]) {
-    const span = document.createElement("span");
-    span.id = id;
-    if (id === "status-dirty") span.setAttribute("aria-hidden", "true");
-    sl.appendChild(span);
-  }
+  // Status line: filename in the LEFT info half (file identity), zoom + dims
+  // in the RIGHT state half. Dirty marker rides the titlebar via
+  // body[data-dirty="true"] — no separate span needed.
+  const nameSpan = document.createElement("span");
+  nameSpan.id = "status-name";
+  chrome.statusInfo!.appendChild(nameSpan);
+
+  const dimsSpan = document.createElement("span");
+  dimsSpan.id = "status-dims";
+  dimsSpan.classList.add("mono");
+  chrome.statusInfo!.appendChild(dimsSpan);
+
+  const zoomSpan = document.createElement("span");
+  zoomSpan.id = "status-zoom";
+  zoomSpan.classList.add("mono");
+  chrome.statusState!.appendChild(zoomSpan);
 }
 
 // Esc cancels in-progress tools (preview mode, crop) — the canonical
