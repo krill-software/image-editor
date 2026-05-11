@@ -75,8 +75,8 @@ function updateTitle() {
 }
 
 function updateStatus() {
-  const name = doc.path ? basename(doc.path) : UNTITLED;
-  set("status-name", name);
+  // Filename lives in the titlebar — see updateTitle. The status line
+  // carries only file-identity (dimensions) and state (zoom).
   document.body.dataset.dirty = String(isDirty());
   const dims = doc.rendered ? `${doc.rendered.width} × ${doc.rendered.height}` : "";
   set("status-dims", dims);
@@ -233,13 +233,10 @@ function initChrome() {
   railEl = chrome.aux!;
   railEl.setAttribute("aria-label", "Tools");
 
-  // Status line: filename in the LEFT info half (file identity), zoom + dims
-  // in the RIGHT state half. Dirty marker rides the titlebar via
-  // body[data-dirty="true"] — no separate span needed.
-  const nameSpan = document.createElement("span");
-  nameSpan.id = "status-name";
-  chrome.statusInfo!.appendChild(nameSpan);
-
+  // Status line:
+  //   LEFT  (info)  → dimensions of the loaded image
+  //   RIGHT (state) → zoom %
+  // Filename rides the titlebar; dirty marker rides body[data-dirty].
   const dimsSpan = document.createElement("span");
   dimsSpan.id = "status-dims";
   dimsSpan.classList.add("mono");
