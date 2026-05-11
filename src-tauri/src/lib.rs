@@ -1,9 +1,13 @@
 use std::fs;
-use std::io::{self, BufWriter};
-use std::path::{Path, PathBuf};
+use std::io::BufWriter;
+use std::path::Path;
 
 use image::{DynamicImage, ImageFormat, RgbImage, RgbaImage};
 use serde::{Deserialize, Serialize};
+
+use krill_desktop_core::{fs as kfs, state as kstate, dev as kdev};
+
+const SLUG: &str = "krill-image-editor";
 
 #[derive(Debug, Serialize)]
 struct ImageRead {
@@ -20,7 +24,7 @@ fn read_image(path: String) -> Result<ImageRead, String> {
     let rgba = img.into_rgba8();
     let (width, height) = rgba.dimensions();
     Ok(ImageRead {
-        path: absolute_path(p),
+        path: kfs::absolute_path(p),
         rgba: rgba.into_raw(),
         width,
         height,
@@ -48,7 +52,7 @@ fn save_image(
     let p = Path::new(&path);
     if let Some(parent) = p.parent() {
         if !parent.as_os_str().is_empty() {
-            fs::create_dir_all(parent).map_err(|e| format_io_err(&path, e))?;
+            fs::create_dir_all(parent).map_err(|e| kfs::format_io_err(&path, e))?;
         }
     }
     let opts = opts.unwrap_or_default();
@@ -67,7 +71,7 @@ fn save_image(
             ]));
         }
         let q = opts.quality.unwrap_or(90).clamp(1, 100);
-        let file = fs::File::create(p).map_err(|e| format_io_err(&path, e))?;
+        let file = fs::File::create(p).map_err(|e| kfs::format_io_err(&path, e))?;
         let mut w = BufWriter::new(file);
         let encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut w, q);
         DynamicImage::ImageRgb8(rgb)
@@ -78,7 +82,7 @@ fn save_image(
         dyn_img.save_with_format(p, fmt).map_err(|e| format!("{path}: {e}"))?;
     }
 
-    Ok(absolute_path(p))
+    Ok(kfs::absolute_path(p))
 }
 
 fn format_from_str(s: &str) -> Result<ImageFormat, String> {
@@ -95,58 +99,23 @@ fn format_from_str(s: &str) -> Result<ImageFormat, String> {
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 struct AppState {
-    window: Option<WindowState>,
+    window: Option<kstate::WindowGeometry>,
     recent: Option<Vec<String>>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Default)]
-struct WindowState {
-    width: u32,
-    height: u32,
-    x: i32,
-    y: i32,
-}
-
-fn state_path() -> Option<PathBuf> {
-    let base = dirs::state_dir().or_else(dirs::data_local_dir)?;
-    Some(base.join("krill-image-editor").join("state.json"))
 }
 
 #[tauri::command]
 fn load_state() -> Option<AppState> {
-    let p = state_path()?;
-    let raw = fs::read_to_string(p).ok()?;
-    serde_json::from_str(&raw).ok()
+    kstate::load(SLUG, "state.json")
 }
 
 #[tauri::command]
 fn save_state(state: AppState) -> Result<(), String> {
-    let p = state_path().ok_or_else(|| "no state dir available".to_string())?;
-    if let Some(parent) = p.parent() {
-        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    }
-    let json = serde_json::to_string_pretty(&state).map_err(|e| e.to_string())?;
-    fs::write(p, json).map_err(|e| e.to_string())
+    kstate::save(SLUG, "state.json", &state)
 }
 
 #[tauri::command]
 fn dev_test_file() -> Option<String> {
-    if !cfg!(debug_assertions) {
-        return None;
-    }
-    let manifest = env!("CARGO_MANIFEST_DIR");
-    let path = Path::new(manifest).parent()?.join("test.png");
-    path.exists().then(|| path.to_string_lossy().into_owned())
-}
-
-fn absolute_path(p: &Path) -> String {
-    fs::canonicalize(p)
-        .map(|abs| abs.to_string_lossy().into_owned())
-        .unwrap_or_else(|_| p.to_string_lossy().into_owned())
-}
-
-fn format_io_err(path: &str, e: io::Error) -> String {
-    format!("{path}: {e}")
+    kdev::test_file(env!("CARGO_MANIFEST_DIR"), &["test.png"])
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
