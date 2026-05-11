@@ -1,7 +1,7 @@
 import "@krill-software/desktop-ui/styles";
 import "./styles.css";
 
-import { mountChrome } from "@krill-software/desktop-ui";
+import { mountChrome, showBootError } from "@krill-software/desktop-ui";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalPosition, LogicalSize } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -371,4 +371,7 @@ function refreshUndoRedoMenuState() {
   document.body.dataset.canRedo = String(canRedo());
 }
 
-boot().catch((e) => console.error("boot failed:", e));
+boot().catch((e) => {
+  console.error("boot failed:", e);
+  showBootError(e);
+});
