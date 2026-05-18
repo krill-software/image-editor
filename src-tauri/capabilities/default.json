@@ -23,6 +23,8 @@
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",
-    "fs:default"
+    "fs:default",
+    "updater:default",
+    "process:default"
   ]
 }

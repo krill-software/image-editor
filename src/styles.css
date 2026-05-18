@@ -85,10 +85,22 @@
   --fm-serif: "Charter", Georgia, "Liberation Serif", serif;
   --fm-mono:  "Hasklig", "Source Code Pro", "JetBrains Mono", ui-monospace, monospace;
 
+  --fm-selection: rgba(221, 117, 150, 0.22); /* alpha-derived from --fm-accent */
+
   --rail-w: 260px;
 }
 
-html, body { font-family: var(--fm-sans); }
+::selection {
+  background: var(--fm-selection);
+  text-shadow: none;
+}
+
+html, body {
+  font-family: var(--fm-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "calt" 1, "liga" 1;
+}
 
 body {
   display: grid;
@@ -156,7 +168,7 @@ body {
 }
 
 .rail-section h3 {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -329,7 +341,7 @@ body {
   border-radius: 3px;
 }
 .filter-thumb-label {
-  font-size: 10.5px;
+  font-size: 11px;
   color: var(--fm-muted);
   text-align: center;
   white-space: nowrap;
