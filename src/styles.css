@@ -123,10 +123,13 @@ html, body {
   min-height: 0;
   overflow: hidden;
   background-color: var(--fm-bg);
-  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAG0lEQVR42mNobyly+PXr/3/GX7/+/+/tKnYEAGdpC27jZL8kAAAAAElFTkSuQmCC");
+  background-image:
+    linear-gradient(45deg,  var(--fm-rule-strong) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--fm-rule-strong) 25%, transparent 25%),
+    linear-gradient(45deg,  transparent 75%, var(--fm-rule-strong) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--fm-rule-strong) 75%);
+  background-position: 0 0, 0 8px, 8px -8px, 8px 0;
   background-size: 16px 16px;
-  background-repeat: repeat;
-  image-rendering: pixelated;
 }
 
 #canvas-stage {
