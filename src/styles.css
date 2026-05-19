@@ -102,25 +102,31 @@ html, body {
   font-feature-settings: "calt" 1, "liga" 1;
 }
 
-body {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-}
-
 /* Body grid (titlebar / aux+main / status) is owned by the package.
  * The rail goes in #aux (left), canvas in #viewport (right). */
 
-/* Light-theme transparency checkerboard. The dark squares are
- * alpha-Space-Cadet over Ghost White — palette-derived. */
+#viewport {
+  display: flex;
+  min-height: 0;
+}
+
+/* Transparency checkerboard.
+ *
+ * 2×2 PNG: Artichoke at 25% alpha + Ghost White, tiled and scaled up to
+ * 8px-per-cell. Palette-strict (`--fm-muted` + `--fm-bg`). The alpha
+ * keeps the "dark" cell as a faded beige rather than full Artichoke,
+ * which would be too heavy as a backdrop. */
 #canvas-root {
   position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
-  background:
-    linear-gradient(45deg,  rgba(48,52,63,0.08) 25%, transparent 25%) 0 0 / 16px 16px,
-    linear-gradient(-45deg, rgba(48,52,63,0.08) 25%, transparent 25%) 0 8px / 16px 16px,
-    linear-gradient(45deg,  transparent 75%, rgba(48,52,63,0.08) 75%) 8px -8px / 16px 16px,
-    linear-gradient(-45deg, transparent 75%, rgba(48,52,63,0.08) 75%) 8px 0 / 16px 16px,
-    var(--fm-bg);
+  background-color: var(--fm-bg);
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAG0lEQVR42mNobyly+PXr/3/GX7/+/+/tKnYEAGdpC27jZL8kAAAAAElFTkSuQmCC");
+  background-size: 16px 16px;
+  background-repeat: repeat;
+  image-rendering: pixelated;
 }
 
 #canvas-stage {
@@ -161,20 +167,33 @@ body {
  * layout is here. */
 
 #aux {
-  padding: 12px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
+.rail-section {
+  display: flex;
+  flex-direction: column;
+}
+.rail-section + .rail-section { margin-top: 4px; }
 .rail-section h3 {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--fm-muted);
-  margin: 0 0 8px 0;
+  margin: 0;
+  padding: 14px 12px 6px;
 }
+
+/* Crop / Resize panels use the legacy .row / .field helpers, scoped
+ * inside their section's padded container. */
+.rail-section .row,
+.rail-section .field,
+.rail-section .checkbox,
+.rail-section .info { margin-left: 12px; margin-right: 12px; }
+.rail-section .row { margin-bottom: 8px; }
 
 .row {
   display: flex;
@@ -243,95 +262,63 @@ body {
 }
 .checkbox input { accent-color: var(--fm-accent); }
 
-.filter-thumbs {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  margin-bottom: 10px;
-}
-.filter-thumb {
+/* Option row — one option per row. Icon + label at the top, optional
+ * thumbnail preview below. The whole row is clickable. */
+.option-row {
   display: flex;
-  flex-direction: column;
-  background: var(--fm-bg);
-  border: 1px solid var(--fm-rule-strong);
-  border-radius: 5px;
-  overflow: hidden;
-}
-.filter-thumb:hover { border-color: var(--fm-muted); }
-.filter-thumb.active {
-  border-color: var(--fm-accent);
-  box-shadow: 0 0 0 1px var(--fm-accent) inset;
-}
-.filter-thumb.active .filter-thumb-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--fm-rule);
+  text-align: left;
+  font: inherit;
   color: var(--fm-text);
+  cursor: pointer;
+}
+.option-row:hover { background: var(--fm-rule); }
+.option-row[data-selected="true"] {
+  background: var(--fm-rule-strong);
+}
+.option-row[data-selected="true"] .option-row-label {
+  color: var(--fm-accent);
   font-weight: 600;
 }
 
-.filter-thumb-head {
+.option-row-head {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  padding: 4px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  font-family: inherit;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
-.filter-thumb-head:hover { background: var(--fm-rule); }
+.option-row-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: var(--fm-muted);
+}
+.option-row:hover .option-row-icon,
+.option-row[data-selected="true"] .option-row-icon { color: var(--fm-text); }
+.option-row-label {
+  font-size: 13px;
+  color: var(--fm-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-.filter-thumb-strength {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 6px;
-  margin: 0;
-  background: var(--fm-rule);
-  border-top: 1px solid var(--fm-rule);
-  cursor: pointer;
-}
-.filter-thumb-strength::-webkit-slider-runnable-track {
-  height: 6px;
-  background: linear-gradient(
-    to right,
-    var(--fm-accent) 0%,
-    var(--fm-accent) calc((var(--val, 100) - 0) * 1%),
-    transparent calc((var(--val, 100) - 0) * 1%),
-    transparent 100%
-  );
-}
-.filter-thumb-strength::-moz-range-track {
-  height: 6px;
-  background: var(--fm-rule);
-}
-.filter-thumb-strength::-moz-range-progress {
-  height: 6px;
-  background: var(--fm-accent);
-}
-.filter-thumb-strength::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 10px;
-  height: 10px;
-  margin-top: -2px;
-  border-radius: 50%;
-  background: var(--fm-bg);
-  border: 1px solid var(--fm-accent);
-  cursor: pointer;
-}
-.filter-thumb-strength::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--fm-bg);
-  border: 1px solid var(--fm-accent);
-  cursor: pointer;
-}
-.filter-thumb-canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1;
+.option-row-thumb {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background:
     linear-gradient(45deg, rgba(48,52,63,0.08) 25%, transparent 25%) 0 0 / 8px 8px,
     linear-gradient(-45deg, rgba(48,52,63,0.08) 25%, transparent 25%) 0 4px / 8px 8px,
@@ -339,27 +326,40 @@ body {
     linear-gradient(-45deg, transparent 75%, rgba(48,52,63,0.08) 75%) 4px 0 / 8px 8px,
     var(--fm-bg);
   border-radius: 3px;
-}
-.filter-thumb-label {
-  font-size: 11px;
-  color: var(--fm-muted);
-  text-align: center;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  /* The thumb canvas is a child of the row <button>. Without this, some
+   * browsers route clicks on the canvas to the canvas itself instead of
+   * bubbling to the parent button, so the row's onClick never fires. */
+  pointer-events: none;
+}
+.option-row-thumb canvas {
+  display: block;
 }
 
-.slider {
-  margin-bottom: 8px;
+/* Slider row — icon + label + numeric readout on one line, range under it.
+ * No thumbnail (preview is the live canvas while dragging). */
+.slider-row {
+  border-top: 1px solid var(--fm-rule);
+  padding: 8px 10px;
 }
-.slider-label {
-  display: flex; justify-content: space-between;
-  font-size: 11px; color: var(--fm-muted);
-  margin-bottom: 3px;
+.slider-row-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }
-.slider-value { color: var(--fm-text); }
-.slider input[type="range"] {
-  width: 100%; accent-color: var(--fm-accent);
+.slider-row-head .option-row-label { flex: 1; min-width: 0; }
+.slider-row-value {
+  font-family: var(--fm-mono);
+  font-size: 11px;
+  color: var(--fm-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 24px;
+  text-align: right;
+}
+.slider-row-input {
+  width: 100%;
+  accent-color: var(--fm-accent);
 }
 
 .info {

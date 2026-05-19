@@ -1,4 +1,8 @@
 // Right-rail tool palette. Three panels: default (tools + filters), crop (active), resize (active).
+//
+// The default panel is intentionally one option per row: each row carries
+// an icon, a label, and (where the result is previewable) a thumbnail
+// painted from the current image with the transform / filter applied.
 
 import type { CropController } from "./crop-tool";
 import { cssFilterFor } from "./pipeline";
@@ -46,33 +50,252 @@ export function createRail(
   };
 }
 
+// ---- Icons (Lucide, currentColor) ----------------------------------------
+
+const ICON = {
+  rotateLeft:  `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>`,
+  rotateRight: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 4v5h-5"/></svg>`,
+  rotate180:   `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12a10 10 0 0 1 20 0v0a10 10 0 0 1-10 10"/><path d="M12 22v-4"/></svg>`,
+  flipH:       `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>`,
+  flipV:       `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/></svg>`,
+  crop:        `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>`,
+  resize:      `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h6v6H3z"/><path d="M21 21v-6h-6"/><path d="m21 21-7-7"/></svg>`,
+  ban:         `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>`,
+  contrast:    `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v20" fill="currentColor"/></svg>`,
+  droplets:    `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4a6 6 0 0 0-8 8 6 6 0 0 0 8 8"/><path d="M22 12a6 6 0 0 1-8 8 6 6 0 0 1-8-8 6 6 0 0 1 8-8 6 6 0 0 1 8 8z"/></svg>`,
+  flipColor:   `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20Z" fill="currentColor"/></svg>`,
+  sun:         `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/></svg>`,
+  contrastFilter: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12v12z" fill="currentColor"/></svg>`,
+  saturation:  `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5-2 1.6-3 3.5-3 5.5a7 7 0 0 0 7 7z"/></svg>`,
+  blur:        `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v20" stroke-dasharray="2 2"/></svg>`,
+};
+
+// ---- Default panel --------------------------------------------------------
+
 function renderDefault(el: HTMLElement, canvas: HTMLCanvasElement, h: RailHandlers) {
-  el.appendChild(section("Transform", [
-    rowButtons([
-      btn("⟲ Rotate L", () => h.rotate(270)),
-      btn("⟳ Rotate R", () => h.rotate(90)),
-      btn("180°",       () => h.rotate(180)),
-    ]),
-    rowButtons([
-      btn("Flip H", () => h.flip("h")),
-      btn("Flip V", () => h.flip("v")),
-    ]),
-    rowButtons([
-      btn("Resize…", h.startResize),
-      btn("Crop…",   h.startCrop),
-    ]),
-  ]));
+  // Transform
+  const xform = section("Transform");
+  xform.appendChild(optionRow({
+    icon: ICON.rotateLeft, label: "Rotate 90° left",
+    preview: { kind: "css-transform", value: "rotate(-90deg)" },
+    onClick: () => h.rotate(270),
+  }));
+  xform.appendChild(optionRow({
+    icon: ICON.rotateRight, label: "Rotate 90° right",
+    preview: { kind: "css-transform", value: "rotate(90deg)" },
+    onClick: () => h.rotate(90),
+  }));
+  xform.appendChild(optionRow({
+    icon: ICON.rotate180, label: "Rotate 180°",
+    preview: { kind: "css-transform", value: "rotate(180deg)" },
+    onClick: () => h.rotate(180),
+  }));
+  xform.appendChild(optionRow({
+    icon: ICON.flipH, label: "Flip horizontal",
+    preview: { kind: "css-transform", value: "scaleX(-1)" },
+    onClick: () => h.flip("h"),
+  }));
+  xform.appendChild(optionRow({
+    icon: ICON.flipV, label: "Flip vertical",
+    preview: { kind: "css-transform", value: "scaleY(-1)" },
+    onClick: () => h.flip("v"),
+  }));
+  xform.appendChild(optionRow({
+    icon: ICON.crop, label: "Crop…",
+    preview: null,
+    onClick: h.startCrop,
+  }));
+  xform.appendChild(optionRow({
+    icon: ICON.resize, label: "Resize…",
+    preview: null,
+    onClick: h.startResize,
+  }));
+  el.appendChild(xform);
 
-  el.appendChild(section("Filters", [
-    filterThumbs(h),
-    slider("Brightness", "brightness", -100, 100, canvas, h),
-    slider("Contrast",   "contrast",   -100, 100, canvas, h),
-    slider("Saturation", "saturation", -100, 100, canvas, h),
-    slider("Blur",       "blur",         0,  20, canvas, h),
-  ]));
+  // Filters (presets)
+  const filters = section("Filters");
+  filters.appendChild(optionRow({
+    icon: ICON.ban, label: "None",
+    preview: { kind: "filter", name: null },
+    selectedWhen: () => doc.ops.every(o => o.kind !== "filter"),
+    onClick: () => h.clearFilters(),
+  }));
+  filters.appendChild(filterOptionRow("Black & white", "grayscale", ICON.flipColor, h));
+  filters.appendChild(filterOptionRow("Sepia", "sepia", ICON.droplets, h));
+  filters.appendChild(filterOptionRow("Invert", "invert", ICON.contrast, h));
+  el.appendChild(filters);
 
-  el.appendChild(section("Document", [docInfoBlock()]));
+  // Adjust (continuous sliders — no thumbnail)
+  const adjust = section("Adjust");
+  adjust.appendChild(sliderRow("Brightness", "brightness", ICON.sun, -100, 100, canvas, h));
+  adjust.appendChild(sliderRow("Contrast",   "contrast",   ICON.contrastFilter, -100, 100, canvas, h));
+  adjust.appendChild(sliderRow("Saturation", "saturation", ICON.saturation, -100, 100, canvas, h));
+  adjust.appendChild(sliderRow("Blur",       "blur",       ICON.blur, 0, 20, canvas, h));
+  el.appendChild(adjust);
+
+  el.appendChild(section("Document", undefined, [docInfoBlock()]));
 }
+
+// ---- Option rows (one option, one row, optional thumbnail) ----------------
+
+type PreviewSpec =
+  | { kind: "css-transform"; value: string }
+  | { kind: "filter"; name: FilterName | null }
+  | null;
+
+interface OptionRowSpec {
+  icon: string;
+  label: string;
+  preview: PreviewSpec;
+  selectedWhen?: () => boolean;
+  onClick: () => void;
+}
+
+const THUMB_SIZE = 56;
+
+function optionRow(spec: OptionRowSpec): HTMLElement {
+  const row = document.createElement("button");
+  row.type = "button";
+  row.className = "option-row";
+
+  const head = document.createElement("div");
+  head.className = "option-row-head";
+  head.innerHTML = `<span class="option-row-icon" aria-hidden="true">${spec.icon}</span><span class="option-row-label">${escapeHtml(spec.label)}</span>`;
+  row.appendChild(head);
+
+  if (spec.preview) {
+    const thumbWrap = document.createElement("div");
+    thumbWrap.className = "option-row-thumb";
+    const cnv = document.createElement("canvas");
+    cnv.width = THUMB_SIZE; cnv.height = THUMB_SIZE;
+    if (spec.preview.kind === "css-transform") cnv.style.transform = spec.preview.value;
+    if (spec.preview.kind === "filter" && spec.preview.name)
+      cnv.style.filter = cssFilterFor(spec.preview.name, 1);
+    thumbWrap.appendChild(cnv);
+    row.appendChild(thumbWrap);
+    paintThumb(cnv);
+    document.addEventListener("doc-changed", () => paintThumb(cnv));
+  }
+
+  const refreshSelected = () => {
+    if (spec.selectedWhen) row.dataset.selected = String(spec.selectedWhen());
+  };
+  refreshSelected();
+  document.addEventListener("doc-changed", refreshSelected);
+
+  row.addEventListener("click", spec.onClick);
+  return row;
+}
+
+function filterOptionRow(label: string, name: FilterName, icon: string, h: RailHandlers): HTMLElement {
+  return optionRow({
+    icon,
+    label,
+    preview: { kind: "filter", name },
+    selectedWhen: () => doc.ops.some(o => o.kind === "filter" && o.name === name),
+    onClick: () => {
+      const active = doc.ops.some(o => o.kind === "filter" && o.name === name);
+      if (active) h.setFilter(name, 0);
+      else h.setFilter(name, 1);
+    },
+  });
+}
+
+function paintThumb(c: HTMLCanvasElement) {
+  const ctx = c.getContext("2d")!;
+  ctx.clearRect(0, 0, THUMB_SIZE, THUMB_SIZE);
+  const src = doc.rendered;
+  if (!src) return;
+  const scale = Math.min(THUMB_SIZE / src.width, THUMB_SIZE / src.height);
+  const dw = Math.max(1, Math.round(src.width * scale));
+  const dh = Math.max(1, Math.round(src.height * scale));
+  const dx = Math.round((THUMB_SIZE - dw) / 2);
+  const dy = Math.round((THUMB_SIZE - dh) / 2);
+  const tmp = document.createElement("canvas");
+  tmp.width = src.width; tmp.height = src.height;
+  tmp.getContext("2d")!.putImageData(src, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(tmp, dx, dy, dw, dh);
+}
+
+// ---- Sliders (no thumbnail; live update on input, commit on change) -------
+
+function sliderRow(
+  label: string,
+  name: FilterName,
+  icon: string,
+  min: number,
+  max: number,
+  canvas: HTMLCanvasElement,
+  h: RailHandlers,
+): HTMLElement {
+  const row = document.createElement("div");
+  row.className = "slider-row";
+
+  const head = document.createElement("div");
+  head.className = "slider-row-head";
+  head.innerHTML = `<span class="option-row-icon" aria-hidden="true">${icon}</span><span class="option-row-label">${escapeHtml(label)}</span><span class="slider-row-value">0</span>`;
+  row.appendChild(head);
+
+  const input = document.createElement("input");
+  input.type = "range";
+  input.className = "slider-row-input";
+  input.min = String(min); input.max = String(max);
+  input.step = "1";
+  row.appendChild(input);
+
+  const vEl = head.querySelector(".slider-row-value") as HTMLSpanElement;
+
+  // Absolute mode: the slider value reflects the current op's amount.
+  // Drag → live preview via canvas.style.filter (showing the *change*
+  // relative to the committed state). Release → commit via setFilter,
+  // which replaces the existing op (or removes it when value===0). The
+  // slider stays where the user left it.
+  const readCurrent = () => {
+    const op = doc.ops.find(o => o.kind === "filter" && o.name === name);
+    return op && op.kind === "filter" ? op.amount : 0;
+  };
+  const reflect = (v: number) => {
+    input.value = String(v);
+    vEl.textContent = String(v);
+  };
+  reflect(readCurrent());
+
+  let dragging = false;
+
+  input.addEventListener("input", () => {
+    dragging = true;
+    const v = +input.value;
+    vEl.textContent = String(v);
+    // Show the *delta* between current committed value and slider value.
+    // doc.rendered already has the committed amount baked in, so we apply
+    // a CSS filter that represents "(new value) minus (committed value)".
+    const delta = v - readCurrent();
+    canvas.style.filter = delta === 0 ? "" : cssFilterFor(name, delta);
+  });
+
+  const commit = () => {
+    if (!dragging) return;
+    dragging = false;
+    const v = +input.value;
+    canvas.style.filter = "";
+    h.setFilter(name, v); // replaces existing op, or removes when v===0
+  };
+  input.addEventListener("change", commit);
+  input.addEventListener("pointerup", commit);
+
+  // External state changes (undo/redo, filter cleared from elsewhere)
+  // should update the slider to match.
+  document.addEventListener("doc-changed", () => {
+    if (dragging) return;
+    reflect(readCurrent());
+  });
+
+  return row;
+}
+
+// ---- Crop / resize panels (unchanged in spirit, simpler markup) -----------
 
 function renderCrop(el: HTMLElement, crop: CropController, h: RailHandlers) {
   const aspectSel = document.createElement("select");
@@ -110,7 +333,7 @@ function renderCrop(el: HTMLElement, crop: CropController, h: RailHandlers) {
   };
   for (const i of [xIn, yIn, wIn, hIn]) i.addEventListener("change", commitFromInputs);
 
-  el.appendChild(section("Crop", [
+  el.appendChild(section("Crop", undefined, [
     labeled("Aspect", aspectSel),
     rowFields([labeled("X", xIn), labeled("Y", yIn)]),
     rowFields([labeled("W", wIn), labeled("H", hIn)]),
@@ -140,7 +363,7 @@ function renderResize(el: HTMLElement, canvas: HTMLCanvasElement, h: RailHandler
     updating = false;
   });
 
-  el.appendChild(section("Resize", [
+  el.appendChild(section("Resize", undefined, [
     rowFields([labeled("Width", wIn), labeled("Height", hIn)]),
     lockWrap,
     rowButtons([
@@ -148,6 +371,18 @@ function renderResize(el: HTMLElement, canvas: HTMLCanvasElement, h: RailHandler
       btn("Cancel", h.cancelTool),
     ]),
   ]));
+}
+
+// ---- Section + small helpers ---------------------------------------------
+
+function section(title: string, _unused?: undefined, children: HTMLElement[] = []): HTMLElement {
+  const s = document.createElement("section");
+  s.className = "rail-section";
+  const h = document.createElement("h3");
+  h.textContent = title;
+  s.appendChild(h);
+  for (const c of children) s.appendChild(c);
+  return s;
 }
 
 function docInfoBlock(): HTMLElement {
@@ -171,27 +406,17 @@ function parseAspect(v: string): number | null {
   return +v || null;
 }
 
-function section(title: string, children: HTMLElement[]): HTMLElement {
-  const s = document.createElement("section");
-  s.className = "rail-section";
-  const h = document.createElement("h3");
-  h.textContent = title;
-  s.appendChild(h);
-  for (const c of children) s.appendChild(c);
-  return s;
+function rowFields(fields: HTMLElement[]): HTMLElement {
+  const row = document.createElement("div");
+  row.className = "row fields";
+  for (const f of fields) row.appendChild(f);
+  return row;
 }
 
 function rowButtons(buttons: HTMLElement[]): HTMLElement {
   const row = document.createElement("div");
   row.className = "row";
   for (const b of buttons) row.appendChild(b);
-  return row;
-}
-
-function rowFields(fields: HTMLElement[]): HTMLElement {
-  const row = document.createElement("div");
-  row.className = "row fields";
-  for (const f of fields) row.appendChild(f);
   return row;
 }
 
@@ -239,192 +464,8 @@ function checkbox(label: string, checked: boolean): HTMLLabelElement {
   return wrap;
 }
 
-type ThumbDef =
-  | { label: string; kind: "none" }
-  | { label: string; kind: "filter"; name: FilterName };
-
-const THUMB_DEFS: ThumbDef[] = [
-  { label: "None",   kind: "none" },
-  { label: "B / W",  kind: "filter", name: "grayscale" },
-  { label: "Sepia",  kind: "filter", name: "sepia" },
-  { label: "Invert", kind: "filter", name: "invert" },
-];
-
-const THUMB_SIZE = 64;
-
-interface Tile {
-  def: ThumbDef;
-  tile: HTMLElement;
-  canvas: HTMLCanvasElement;
-  range: HTMLInputElement | null;
-  strength: number;
-  setStrength(v: number): void;
-}
-
-function filterThumbs(h: RailHandlers): HTMLElement {
-  const wrap = document.createElement("div");
-  wrap.className = "filter-thumbs";
-
-  const tiles: Tile[] = THUMB_DEFS.map((def) => {
-    const tile = document.createElement("div");
-    tile.className = "filter-thumb";
-    tile.title = def.label;
-
-    const head = document.createElement("button");
-    head.type = "button";
-    head.className = "filter-thumb-head";
-
-    const c = document.createElement("canvas");
-    c.width = THUMB_SIZE; c.height = THUMB_SIZE;
-    c.className = "filter-thumb-canvas";
-
-    const lab = document.createElement("span");
-    lab.className = "filter-thumb-label";
-    lab.textContent = def.label;
-
-    head.appendChild(c);
-    head.appendChild(lab);
-    tile.appendChild(head);
-
-    let range: HTMLInputElement | null = null;
-    if (def.kind === "filter") {
-      range = document.createElement("input");
-      range.type = "range";
-      range.min = "0"; range.max = "100"; range.step = "1"; range.value = "100";
-      range.className = "filter-thumb-strength";
-      tile.appendChild(range);
-    }
-
-    const t: Tile = {
-      def, tile, canvas: c, range,
-      strength: 1,
-      setStrength(v: number) {
-        this.strength = v;
-        if (this.range) this.range.value = String(Math.round(v * 100));
-        if (def.kind === "filter") c.style.filter = cssFilterFor(def.name, v);
-      },
-    };
-    t.setStrength(1);
-
-    if (def.kind === "filter" && range) {
-      const r = range;
-      r.addEventListener("input", () => {
-        const v = (+r.value) / 100;
-        t.strength = v;
-        c.style.filter = cssFilterFor(def.name, v);
-      });
-      r.addEventListener("change", () => {
-        h.setFilter(def.name, (+r.value) / 100);
-      });
-    }
-
-    head.addEventListener("click", () => {
-      if (def.kind === "none") {
-        h.clearFilters();
-        return;
-      }
-      const isActive = doc.ops.some(
-        (o) => o.kind === "filter" && o.name === def.name,
-      );
-      if (isActive) {
-        h.setFilter(def.name, 0);
-      } else {
-        if (t.strength === 0) t.setStrength(1);
-        h.setFilter(def.name, t.strength);
-      }
-    });
-
-    wrap.appendChild(tile);
-    return t;
-  });
-
-  const paint = () => {
-    const activeNames = new Set(
-      doc.ops.filter((o) => o.kind === "filter").map((o) => o.name),
-    );
-    for (const t of tiles) {
-      if (t.def.kind === "filter") {
-        const def = t.def;
-        const op = doc.ops.find(
-          (o) => o.kind === "filter" && o.name === def.name,
-        );
-        if (op && op.kind === "filter") t.setStrength(op.amount);
-        else t.setStrength(1);
-      }
-      const isActive =
-        t.def.kind === "none"
-          ? activeNames.size === 0
-          : activeNames.has(t.def.name);
-      t.tile.classList.toggle("active", isActive);
-    }
-
-    const src = doc.rendered;
-    if (!src) {
-      for (const t of tiles) {
-        const ctx = t.canvas.getContext("2d")!;
-        ctx.clearRect(0, 0, THUMB_SIZE, THUMB_SIZE);
-      }
-      return;
-    }
-    const scale = Math.min(THUMB_SIZE / src.width, THUMB_SIZE / src.height);
-    const dw = Math.max(1, Math.round(src.width * scale));
-    const dh = Math.max(1, Math.round(src.height * scale));
-    const dx = Math.round((THUMB_SIZE - dw) / 2);
-    const dy = Math.round((THUMB_SIZE - dh) / 2);
-
-    const tmp = document.createElement("canvas");
-    tmp.width = src.width; tmp.height = src.height;
-    tmp.getContext("2d")!.putImageData(src, 0, 0);
-
-    for (const t of tiles) {
-      const ctx = t.canvas.getContext("2d")!;
-      ctx.clearRect(0, 0, THUMB_SIZE, THUMB_SIZE);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(tmp, dx, dy, dw, dh);
-    }
-  };
-
-  paint();
-  document.addEventListener("doc-changed", paint);
-  return wrap;
-}
-
-function slider(
-  label: string,
-  name: FilterName,
-  min: number, max: number,
-  canvas: HTMLCanvasElement,
-  h: RailHandlers,
-): HTMLElement {
-  const wrap = document.createElement("div");
-  wrap.className = "slider";
-  const lab = document.createElement("div");
-  lab.className = "slider-label";
-  lab.innerHTML = `<span>${label}</span><span class="slider-value">0</span>`;
-  const input = document.createElement("input");
-  input.type = "range";
-  input.min = String(min); input.max = String(max);
-  input.step = "1"; input.value = "0";
-  const vEl = lab.querySelector(".slider-value") as HTMLSpanElement;
-
-  const live = () => {
-    const v = +input.value;
-    vEl.textContent = String(v);
-    canvas.style.filter = cssFilterFor(name, v);
-  };
-  const commit = () => {
-    const v = +input.value;
-    canvas.style.filter = "";
-    if (v !== 0) h.applyFilter(name, v);
-    input.value = "0";
-    vEl.textContent = "0";
-  };
-  input.addEventListener("input", live);
-  input.addEventListener("change", commit);
-  input.addEventListener("pointerup", commit);
-
-  wrap.appendChild(lab);
-  wrap.appendChild(input);
-  return wrap;
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]!));
 }
