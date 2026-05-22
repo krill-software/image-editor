@@ -19,6 +19,7 @@
     "core:window:allow-inner-size",
     "core:window:allow-outer-position",
     "core:app:allow-default-window-icon",
+    "core:app:allow-version",
     "cli:default",
     "dialog:default",
     "dialog:allow-open",

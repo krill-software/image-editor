@@ -2,6 +2,7 @@ import "@krill-software/desktop-ui/styles";
 import "./styles.css";
 
 import { mountChrome, showBootError } from "@krill-software/desktop-ui";
+import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, LogicalPosition, LogicalSize } from "@tauri-apps/api/window";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
@@ -154,9 +155,10 @@ const exportFmt = (fmt: OutputFormat) => () => void exportAs({
 /** Build the body chrome via desktop-ui's mountChrome and graft the
  *  app's working view (canvas-root / canvas-stage / canvas / overlay /
  *  rail) and the four status-line spans into the structure. */
-function initChrome() {
+function initChrome(version?: string) {
   const chrome = mountChrome({
     productName: "Image Editor",
+    version,
     actions: {
       "new":         () => void newFile(),
       "open":        () => void openViaDialog(),
@@ -324,7 +326,8 @@ async function boot() {
     if (loaded) Object.assign(persisted, loaded);
   } catch { /* no prior state */ }
 
-  initChrome();
+  const version = await getVersion().catch(() => undefined);
+  initChrome(version);
 
   viewport = createViewport(root, stage, canvas);
   crop = createCropTool(overlay, canvas, viewport);
