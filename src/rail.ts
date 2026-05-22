@@ -132,8 +132,6 @@ function renderDefault(el: HTMLElement, canvas: HTMLCanvasElement, h: RailHandle
   adjust.appendChild(sliderRow("Saturation", "saturation", ICON.saturation, -100, 100, canvas, h));
   adjust.appendChild(sliderRow("Blur",       "blur",       ICON.blur, 0, 20, canvas, h));
   el.appendChild(adjust);
-
-  el.appendChild(section("Document", undefined, [docInfoBlock()]));
 }
 
 // ---- Option rows (one option, one row, optional thumbnail) ----------------
@@ -383,18 +381,6 @@ function section(title: string, _unused?: undefined, children: HTMLElement[] = [
   s.appendChild(h);
   for (const c of children) s.appendChild(c);
   return s;
-}
-
-function docInfoBlock(): HTMLElement {
-  const wrap = document.createElement("div");
-  wrap.className = "info";
-  const update = () => {
-    const r = doc.rendered;
-    wrap.textContent = r ? `${r.width} × ${r.height} px` : "no image";
-  };
-  update();
-  document.addEventListener("doc-changed", update);
-  return wrap;
 }
 
 function parseAspect(v: string): number | null {

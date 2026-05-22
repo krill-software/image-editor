@@ -194,8 +194,7 @@ html, body {
  * inside their section's padded container. */
 .rail-section .row,
 .rail-section .field,
-.rail-section .checkbox,
-.rail-section .info { margin-left: 12px; margin-right: 12px; }
+.rail-section .checkbox { margin-left: 12px; margin-right: 12px; }
 .rail-section .row { margin-bottom: 8px; }
 
 .row {
@@ -363,10 +362,6 @@ html, body {
 .slider-row-input {
   width: 100%;
   accent-color: var(--fm-accent);
-}
-
-.info {
-  font-size: 12px; color: var(--fm-muted);
 }
 
 /* Status line + dirty marker are package-owned. */
