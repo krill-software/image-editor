@@ -26,3 +26,166 @@ features:
   - tag: Tauri · Rust
     title: Native Linux
     blurb: Small binary. Real file associations. No Electron.
+principles_heading: One image, one window.
+principles:
+  - strong: Canvas is the surface.
+    span: Tools live in a thin rail, not a top ribbon.
+  - strong: Keyboard reachable.
+    span: Every op has a shortcut. Mouse never required.
+  - strong: Destructive but journaled.
+    span: Edits commit to pixels; undo replays from the original.
+  - strong: Truthful preview.
+    span: What the canvas shows is what the file will be.
+extension: ".png"
+---
+<style>
+  .ie-editor-pane {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    min-height: 360px;
+  }
+  .ie-canvas-area {
+    position: relative;
+    background:
+      linear-gradient(45deg, rgba(48, 52, 63, 0.06) 25%, transparent 25%) 0 0 / 14px 14px,
+      linear-gradient(-45deg, rgba(48, 52, 63, 0.06) 25%, transparent 25%) 0 7px / 14px 14px,
+      linear-gradient(45deg, transparent 75%, rgba(48, 52, 63, 0.06) 75%) 7px -7px / 14px 14px,
+      linear-gradient(-45deg, transparent 75%, rgba(48, 52, 63, 0.06) 75%) 7px 0 / 14px 14px,
+      var(--bg);
+    display: grid;
+    place-items: center;
+    padding: 28px;
+  }
+  .ie-photo {
+    width: 78%;
+    max-width: 380px;
+    aspect-ratio: 4 / 3;
+    border-radius: 4px;
+    background:
+      radial-gradient(circle at 25% 30%, rgba(255, 130, 191, 0.55) 0%, transparent 35%),
+      radial-gradient(circle at 75% 65%, rgba(221, 117, 150, 0.5) 0%, transparent 45%),
+      linear-gradient(135deg, var(--ink) 0%, var(--muted) 100%);
+    box-shadow: 0 12px 28px rgba(48, 52, 63, 0.22);
+    position: relative;
+  }
+  .ie-photo::after {
+    content: "";
+    position: absolute;
+    inset: 12% 18% 22% 14%;
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 0 1px rgba(250, 250, 255, 0.6) inset,
+      0 0 0 9999px rgba(48, 52, 63, 0.45);
+    clip-path: polygon(
+      -1000% -1000%, 1000% -1000%, 1000% 1000%, -1000% 1000%
+    );
+    pointer-events: none;
+  }
+  .ie-rail {
+    background: var(--panel);
+    border-left: 1px solid var(--rule);
+    padding: 18px;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .ie-rail-h {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  .ie-rail-section { margin-bottom: 18px; }
+  .ie-rail-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .ie-rail-btn {
+    flex: 1;
+    text-align: center;
+    background: var(--bg);
+    border: 1px solid var(--rule-strong);
+    border-radius: 5px;
+    padding: 6px 6px;
+    color: var(--ink);
+  }
+  .ie-rail-btn.primary {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .ie-slider-mock {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .ie-slider-mock + .ie-track {
+    height: 3px;
+    background: var(--panel-2);
+    border-radius: 2px;
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .ie-slider-mock + .ie-track::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: -4px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .ie-slider-mock + .ie-track.mid::after { left: calc(50% - 5px); }
+  .ie-slider-mock + .ie-track.lo::after  { left: 18%; }
+
+  @media (max-width: 720px) {
+    .ie-editor-pane { grid-template-columns: 1fr; }
+    .ie-rail { display: none; }
+  }
+</style>
+<div class="pv-titlebar">
+  <span class="title">sunset.png<span class="dirty">•</span></span>
+  <span class="winbtns">─ ▢ ✕</span>
+</div>
+<div class="ie-editor-pane">
+  <div class="ie-canvas-area">
+    <div class="ie-photo"></div>
+  </div>
+  <aside class="ie-rail">
+    <div class="ie-rail-section">
+      <h4 class="ie-rail-h">Transform</h4>
+      <div class="ie-rail-row">
+        <span class="ie-rail-btn">⟲</span>
+        <span class="ie-rail-btn">⟳</span>
+        <span class="ie-rail-btn">180°</span>
+      </div>
+      <div class="ie-rail-row">
+        <span class="ie-rail-btn">Flip H</span>
+        <span class="ie-rail-btn">Flip V</span>
+      </div>
+      <div class="ie-rail-row">
+        <span class="ie-rail-btn">Resize…</span>
+        <span class="ie-rail-btn primary">Crop…</span>
+      </div>
+    </div>
+    <div class="ie-rail-section">
+      <h4 class="ie-rail-h">Filters</h4>
+      <div class="ie-rail-row">
+        <span class="ie-rail-btn">B / W</span>
+        <span class="ie-rail-btn">Sepia</span>
+        <span class="ie-rail-btn">Invert</span>
+      </div>
+      <div class="ie-slider-mock"><span>Brightness</span><span>+12</span></div>
+      <div class="ie-track mid"></div>
+      <div class="ie-slider-mock"><span>Contrast</span><span>0</span></div>
+      <div class="ie-track mid"></div>
+      <div class="ie-slider-mock"><span>Blur</span><span>3</span></div>
+      <div class="ie-track lo"></div>
+    </div>
+  </aside>
+</div>
+<div class="pv-status">
+  <span>sunset.png · modified</span>
+  <span>3024 × 2268 · 67%</span>
+</div>
