@@ -1,433 +1,191 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Image — a calm image editor for Linux</title>
-    <meta
-      name="description"
-      content="A minimal image editor for Linux. Crop, resize, rotate, filter, export. One file at a time."
-    />
-    <meta property="og:title" content="Image — a calm image editor for Linux" />
-    <meta
-      property="og:description"
-      content="Crop, resize, rotate, filter, export. A minimal image editor for Linux. Free and open source."
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="https://krill-software.github.io/chrome.css" />
-    <style>
-      /* App-specific styles only — shared chrome lives in
-       * https://krill-software.github.io/chrome.css. */
+---
+layout: app
+tagline: a calm image editor for Linux
+description: A minimal image editor for Linux. Crop, resize, rotate, filter, export. One file at a time.
+og_description: Crop, resize, rotate, filter, export. A minimal image editor for Linux. Free and open source.
+eyebrow: An image editor for Linux
+heading: "Crop, filter, <em>ship</em>."
+lede: A minimal image editor. One file at a time.
+features_heading: Cover the boring 80%, calmly.
+features:
+  - tag: Crop · Resize · Rotate
+    title: The geometry you actually use
+    blurb: Click-drag crop with aspect presets. Pixel-precise resize. Rotate and flip in one keystroke.
+  - tag: Live sliders
+    title: Filters that preview, then commit
+    blurb: B&W, sepia, invert, brightness, contrast, saturation, blur. Preview while dragging, bake on release.
+  - tag: Ctrl+Z
+    title: Snapshot undo
+    blurb: Every edit goes on a stack. Undo and redo without surprises, even after rotates and crops.
+  - tag: F
+    title: Chrome-free preview
+    blurb: One key flips to a full-window image-only view. No menus, no rail, no status line.
+  - tag: PNG · JPEG · WebP · BMP · TIFF · ICO
+    title: Export, broadly
+    blurb: Re-encoded through Rust for quality and format breadth. JPEG flattens alpha onto a chosen background.
+  - tag: Tauri · Rust
+    title: Native Linux
+    blurb: Small binary. Real file associations. No Electron.
+principles_heading: One image, one window.
+principles:
+  - strong: Canvas is the surface.
+    span: Tools live in a thin rail, not a top ribbon.
+  - strong: Keyboard reachable.
+    span: Every op has a shortcut. Mouse never required.
+  - strong: Destructive but journaled.
+    span: Edits commit to pixels; undo replays from the original.
+  - strong: Truthful preview.
+    span: What the canvas shows is what the file will be.
+extension: ".png"
+---
+<style>
+  .ie-editor-pane {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    min-height: 360px;
+  }
+  .ie-canvas-area {
+    position: relative;
+    background:
+      linear-gradient(45deg, rgba(48, 52, 63, 0.06) 25%, transparent 25%) 0 0 / 14px 14px,
+      linear-gradient(-45deg, rgba(48, 52, 63, 0.06) 25%, transparent 25%) 0 7px / 14px 14px,
+      linear-gradient(45deg, transparent 75%, rgba(48, 52, 63, 0.06) 75%) 7px -7px / 14px 14px,
+      linear-gradient(-45deg, transparent 75%, rgba(48, 52, 63, 0.06) 75%) 7px 0 / 14px 14px,
+      var(--bg);
+    display: grid;
+    place-items: center;
+    padding: 28px;
+  }
+  .ie-photo {
+    width: 78%;
+    max-width: 380px;
+    aspect-ratio: 4 / 3;
+    border-radius: 4px;
+    background:
+      radial-gradient(circle at 25% 30%, rgba(255, 130, 191, 0.55) 0%, transparent 35%),
+      radial-gradient(circle at 75% 65%, rgba(221, 117, 150, 0.5) 0%, transparent 45%),
+      linear-gradient(135deg, var(--ink) 0%, var(--muted) 100%);
+    box-shadow: 0 12px 28px rgba(48, 52, 63, 0.22);
+    position: relative;
+  }
+  .ie-photo::after {
+    content: "";
+    position: absolute;
+    inset: 12% 18% 22% 14%;
+    border: 1px solid var(--accent);
+    box-shadow: 0 0 0 1px rgba(250, 250, 255, 0.6) inset,
+      0 0 0 9999px rgba(48, 52, 63, 0.45);
+    clip-path: polygon(
+      -1000% -1000%, 1000% -1000%, 1000% 1000%, -1000% 1000%
+    );
+    pointer-events: none;
+  }
+  .ie-rail {
+    background: var(--panel);
+    border-left: 1px solid var(--rule);
+    padding: 18px;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .ie-rail-h {
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  .ie-rail-section { margin-bottom: 18px; }
+  .ie-rail-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .ie-rail-btn {
+    flex: 1;
+    text-align: center;
+    background: var(--bg);
+    border: 1px solid var(--rule-strong);
+    border-radius: 5px;
+    padding: 6px 6px;
+    color: var(--ink);
+  }
+  .ie-rail-btn.primary {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .ie-slider-mock {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .ie-slider-mock + .ie-track {
+    height: 3px;
+    background: var(--panel-2);
+    border-radius: 2px;
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .ie-slider-mock + .ie-track::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: -4px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .ie-slider-mock + .ie-track.mid::after { left: calc(50% - 5px); }
+  .ie-slider-mock + .ie-track.lo::after  { left: 18%; }
 
-      /* Preview mock */
-      .preview-frame {
-        margin: 48px 0 0;
-        border: 1px solid var(--rule-strong);
-        border-radius: 12px;
-        overflow: hidden;
-        background: var(--bg);
-        box-shadow: 0 30px 60px -30px rgba(48, 52, 63, 0.18),
-          0 8px 20px -10px rgba(48, 52, 63, 0.08);
-      }
-      .titlebar {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--rule);
-        font-family: var(--mono);
-        font-size: 12px;
-        color: var(--muted);
-        background: var(--panel);
-      }
-      .titlebar .dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: var(--rule-strong);
-      }
-      .titlebar .dot.red    { background: #e8a5a5; }
-      .titlebar .dot.amber  { background: #e8cfa5; }
-      .titlebar .dot.green  { background: #a5d4b2; }
-      .titlebar .menu {
-        display: flex;
-        gap: 14px;
-        margin-left: 12px;
-        color: var(--muted);
-      }
-      .titlebar .menu .active { color: var(--ink); }
-      .titlebar .title {
-        margin-left: auto;
-        color: var(--ink);
-      }
-      .titlebar .dirty { color: var(--accent); margin-left: 4px; }
-
-      .editor-pane {
-        display: grid;
-        grid-template-columns: 1fr 220px;
-        min-height: 360px;
-      }
-
-      .canvas-area {
-        position: relative;
-        background:
-          linear-gradient(45deg, #e8e8ee 25%, transparent 25%) 0 0 / 14px 14px,
-          linear-gradient(-45deg, #e8e8ee 25%, transparent 25%) 0 7px / 14px 14px,
-          linear-gradient(45deg, transparent 75%, #e8e8ee 75%) 7px -7px / 14px 14px,
-          linear-gradient(-45deg, transparent 75%, #e8e8ee 75%) 7px 0 / 14px 14px,
-          var(--bg);
-        display: grid;
-        place-items: center;
-        padding: 28px;
-      }
-
-      .photo {
-        width: 78%;
-        max-width: 380px;
-        aspect-ratio: 4 / 3;
-        border-radius: 4px;
-        background:
-          radial-gradient(circle at 25% 30%, #ffd6a8 0%, transparent 35%),
-          radial-gradient(circle at 75% 65%, #f5a8c4 0%, transparent 45%),
-          linear-gradient(135deg, #4a5a8b 0%, #2a3349 60%, #1f2533 100%);
-        box-shadow: 0 12px 28px rgba(48, 52, 63, 0.22);
-        position: relative;
-      }
-      /* Crop rectangle on the mock image */
-      .photo::after {
-        content: "";
-        position: absolute;
-        inset: 12% 18% 22% 14%;
-        border: 1px solid var(--accent);
-        box-shadow: 0 0 0 1px rgba(250, 250, 255, 0.6) inset,
-          0 0 0 9999px rgba(48, 52, 63, 0.45);
-        clip-path: polygon(
-          -1000% -1000%, 1000% -1000%, 1000% 1000%, -1000% 1000%
-        );
-        pointer-events: none;
-      }
-
-      .rail {
-        background: var(--panel);
-        border-left: 1px solid var(--rule);
-        padding: 18px;
-        font-size: 12px;
-        font-family: var(--mono);
-      }
-      .rail-h {
-        font-size: 10.5px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-        margin: 0 0 8px;
-      }
-      .rail-section { margin-bottom: 18px; }
-      .rail-row { display: flex; gap: 6px; margin-bottom: 6px; }
-      .rail-btn {
-        flex: 1;
-        text-align: center;
-        background: var(--bg);
-        border: 1px solid var(--rule-strong);
-        border-radius: 5px;
-        padding: 6px 6px;
-        color: var(--ink);
-      }
-      .rail-btn.primary {
-        background: var(--accent);
-        color: var(--bg);
-        border-color: var(--accent);
-        font-weight: 600;
-      }
-      .slider-mock {
-        display: flex;
-        justify-content: space-between;
-        font-size: 10.5px;
-        color: var(--muted);
-        margin-bottom: 4px;
-      }
-      .slider-mock + .track {
-        height: 3px;
-        background: var(--panel-2);
-        border-radius: 2px;
-        position: relative;
-        margin-bottom: 12px;
-      }
-      .slider-mock + .track::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: -4px;
-        width: 11px;
-        height: 11px;
-        border-radius: 50%;
-        background: var(--accent);
-      }
-      .slider-mock + .track.mid::after { left: calc(50% - 5px); }
-      .slider-mock + .track.lo::after  { left: 18%; }
-
-      .statusbar {
-        border-top: 1px solid var(--rule);
-        padding: 8px 16px;
-        display: flex;
-        justify-content: space-between;
-        font-family: var(--mono);
-        font-size: 12px;
-        color: var(--muted);
-        background: var(--panel);
-      }
-
-      .keybinds {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px 32px;
-        font-family: var(--mono);
-        font-size: 13.5px;
-      }
-      .keybinds div {
-        display: flex;
-        justify-content: space-between;
-        padding: 6px 0;
-        border-bottom: 1px dashed var(--rule);
-      }
-      .keybinds div span:last-child { color: var(--muted); }
-
-      kbd {
-        font-family: var(--mono);
-        font-size: 12px;
-        background: var(--bg);
-        border: 1px solid var(--rule-strong);
-        border-bottom-width: 2px;
-        border-radius: 4px;
-        padding: 1px 6px;
-        color: var(--ink);
-      }
-
-      @media (max-width: 720px) {
-        .editor-pane { grid-template-columns: 1fr; }
-        .rail { display: none; }
-      }
-        .editor-pane { grid-template-columns: 1fr; }
-        .rail { display: none; }
-        .keybinds { grid-template-columns: 1fr; }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <nav class="top">
-        <div class="brand">krill / image</div>
-        <ul>
-          <li><a href="#features">Features</a></li>
-          <li><a href="#install">Install</a></li>
-          <li><a href="https://github.com/krill-software/image-editor">GitHub</a></li>
-        </ul>
-      </nav>
-
-      <header class="hero">
-        <div class="eyebrow">An image editor for Linux</div>
-        <h1>Crop, filter, <em>ship</em>.</h1>
-        <p class="lede">
-          A minimal image editor. One file at a time.
-        </p>
-        <div class="cta">
-          <a
-            class="btn btn-primary"
-            href="https://github.com/krill-software/image-editor/releases/download/v0.2.1/Image.Editor_0.2.1_amd64.AppImage"
-          >
-            Download AppImage <span class="size">· 73 MB</span>
-          </a>
-          <a
-            class="btn btn-secondary"
-            href="https://github.com/krill-software/image-editor/releases/download/v0.2.1/Image.Editor_0.2.1_amd64.deb"
-          >
-            .deb for Ubuntu / Debian
-          </a>
-        </div>
-        <div class="meta">
-          <strong>v0.2.1</strong> · Linux x86_64 · Free &amp; open source
-        </div>
-
-        <div class="preview-frame">
-          <div class="titlebar">
-            <span class="dot red"></span>
-            <span class="dot amber"></span>
-            <span class="dot green"></span>
-            <span class="menu">
-              <span class="active">File</span>
-              <span>Edit</span>
-              <span>Image</span>
-              <span>Filter</span>
-              <span>View</span>
-            </span>
-            <span class="title">sunset.jpg<span class="dirty">•</span></span>
-          </div>
-          <div class="editor-pane">
-            <div class="canvas-area">
-              <div class="photo"></div>
-            </div>
-            <aside class="rail">
-              <div class="rail-section">
-                <h4 class="rail-h">Transform</h4>
-                <div class="rail-row">
-                  <span class="rail-btn">⟲</span>
-                  <span class="rail-btn">⟳</span>
-                  <span class="rail-btn">180°</span>
-                </div>
-                <div class="rail-row">
-                  <span class="rail-btn">Flip H</span>
-                  <span class="rail-btn">Flip V</span>
-                </div>
-                <div class="rail-row">
-                  <span class="rail-btn">Resize…</span>
-                  <span class="rail-btn primary">Crop…</span>
-                </div>
-              </div>
-              <div class="rail-section">
-                <h4 class="rail-h">Filters</h4>
-                <div class="rail-row">
-                  <span class="rail-btn">B / W</span>
-                  <span class="rail-btn">Sepia</span>
-                  <span class="rail-btn">Invert</span>
-                </div>
-                <div class="slider-mock"><span>Brightness</span><span>+12</span></div>
-                <div class="track mid"></div>
-                <div class="slider-mock"><span>Contrast</span><span>0</span></div>
-                <div class="track mid"></div>
-                <div class="slider-mock"><span>Blur</span><span>3</span></div>
-                <div class="track lo"></div>
-              </div>
-            </aside>
-          </div>
-          <div class="statusbar">
-            <span>sunset.jpg · modified</span>
-            <span>3024 × 2268 · 67%</span>
-          </div>
-        </div>
-      </header>
-
-      <section id="features">
-        <div class="section-label">Features</div>
-        <h2>Cover the boring 80%, calmly.</h2>
-        <div class="features">
-          <div class="feature">
-            <div class="tag">Crop · Resize · Rotate</div>
-            <h3>The geometry you actually use</h3>
-            <p>Click-drag crop with aspect presets. Pixel-precise resize. Rotate and flip in one keystroke.</p>
-          </div>
-          <div class="feature">
-            <div class="tag">Live sliders</div>
-            <h3>Filters that preview, then commit</h3>
-            <p>B&amp;W, sepia, invert, brightness, contrast, saturation, blur. Preview while dragging, bake on release.</p>
-          </div>
-          <div class="feature">
-            <div class="tag">Ctrl+Z</div>
-            <h3>Snapshot undo</h3>
-            <p>Every edit goes on a stack. Undo and redo without surprises, even after rotates and crops.</p>
-          </div>
-          <div class="feature">
-            <div class="tag">F</div>
-            <h3>Chrome-free preview</h3>
-            <p>One key flips to a full-window image-only view. No menus, no rail, no status line.</p>
-          </div>
-          <div class="feature">
-            <div class="tag">PNG · JPEG · WebP · BMP · TIFF · ICO</div>
-            <h3>Export, broadly</h3>
-            <p>Re-encoded through Rust for quality and format breadth. JPEG flattens alpha onto a chosen background.</p>
-          </div>
-          <div class="feature">
-            <div class="tag">Tauri · Rust</div>
-            <h3>Native Linux</h3>
-            <p>Small binary. Real file associations. No Electron.</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="principles">
-        <div class="section-label">Principles</div>
-        <h2>One image, one window.</h2>
-        <div class="principles">
-          <div class="principle">
-            <strong>Canvas is the surface.</strong>
-            <span>Tools live in a thin rail, not a top ribbon.</span>
-          </div>
-          <div class="principle">
-            <strong>Keyboard reachable.</strong>
-            <span>Every op has a shortcut. Mouse never required.</span>
-          </div>
-          <div class="principle">
-            <strong>Destructive but journaled.</strong>
-            <span>Edits commit to pixels; undo replays from the original.</span>
-          </div>
-          <div class="principle">
-            <strong>Truthful preview.</strong>
-            <span>What the canvas shows is what the file will be.</span>
-          </div>
-        </div>
-      </section>
-
-      <section id="install">
-        <div class="section-label">Install</div>
-        <h2>Two files. One minute.</h2>
-        <div class="install">
-          <div class="install-copy">
-            <p>
-              Both formats ship the same binary and register common image
-              MIME types as associated file types.
-            </p>
-            <p style="margin-top: 20px">
-              Or build from source:
-              <span style="font-family: var(--mono); color: var(--ink)">pnpm install &amp;&amp; pnpm tauri build</span>.
-            </p>
-          </div>
-          <div class="install-box">
-            <h3>AppImage · any Linux</h3>
-<pre><span class="c"># download</span>
-curl -LO https://github.com/krill-software/image-editor/releases/download/v0.2.1/Image.Editor_0.2.1_amd64.AppImage
-
-<span class="c"># make executable &amp; run</span>
-chmod +x Image.Editor_0.2.1_amd64.AppImage
-./Image.Editor_0.2.1_amd64.AppImage</pre>
-
-            <hr />
-
-            <h3>Debian / Ubuntu</h3>
-<pre>sudo dpkg -i Image.Editor_0.2.1_amd64.deb
-krill-image-editor path/to/photo.jpg</pre>
-          </div>
-        </div>
-      </section>
-
-      <section id="keys">
-        <div class="section-label">Keybindings</div>
-        <h2>All of it, from the keyboard.</h2>
-        <div class="keybinds">
-          <div><span>Open</span><kbd>Ctrl O</kbd></div>
-          <div><span>Save / Save As</span><kbd>Ctrl S / Shift S</kbd></div>
-          <div><span>New buffer</span><kbd>Ctrl N</kbd></div>
-          <div><span>Undo / Redo</span><kbd>Ctrl Z / Shift Z</kbd></div>
-          <div><span>Rotate Right / Left</span><kbd>Ctrl R / Shift R</kbd></div>
-          <div><span>Flip H / V</span><kbd>H / V</kbd></div>
-          <div><span>Zoom in / out</span><kbd>Ctrl = / -</kbd></div>
-          <div><span>Fit / 100%</span><kbd>Ctrl 0 / 1</kbd></div>
-          <div><span>Pan</span><kbd>Space drag</kbd></div>
-          <div><span>Preview mode</span><kbd>F</kbd></div>
-          <div><span>Cancel tool</span><kbd>Esc</kbd></div>
-          <div><span>Quit</span><kbd>Ctrl Q</kbd></div>
-        </div>
-      </section>
-
-      <footer>
-        <div>© krill · MIT licensed · No tracking, no accounts</div>
-        <div>
-          <a href="https://github.com/krill-software/image-editor">Source on GitHub</a>
-          &nbsp;·&nbsp;
-          <a href="https://github.com/krill-software/image-editor/issues">Report an issue</a>
-        </div>
-      </footer>
+  @media (max-width: 720px) {
+    .ie-editor-pane { grid-template-columns: 1fr; }
+    .ie-rail { display: none; }
+  }
+</style>
+<div class="pv-titlebar">
+  <span class="title">sunset.png<span class="dirty">•</span></span>
+  <span class="winbtns">─ ▢ ✕</span>
+</div>
+<div class="ie-editor-pane">
+  <div class="ie-canvas-area">
+    <div class="ie-photo"></div>
+  </div>
+  <aside class="ie-rail">
+    <div class="ie-rail-section">
+      <h4 class="ie-rail-h">Transform</h4>
+      <div class="ie-rail-row">
+        <span class="ie-rail-btn">⟲</span>
+        <span class="ie-rail-btn">⟳</span>
+        <span class="ie-rail-btn">180°</span>
+      </div>
+      <div class="ie-rail-row">
+        <span class="ie-rail-btn">Flip H</span>
+        <span class="ie-rail-btn">Flip V</span>
+      </div>
+      <div class="ie-rail-row">
+        <span class="ie-rail-btn">Resize…</span>
+        <span class="ie-rail-btn primary">Crop…</span>
+      </div>
     </div>
-  </body>
-</html>
+    <div class="ie-rail-section">
+      <h4 class="ie-rail-h">Filters</h4>
+      <div class="ie-rail-row">
+        <span class="ie-rail-btn">B / W</span>
+        <span class="ie-rail-btn">Sepia</span>
+        <span class="ie-rail-btn">Invert</span>
+      </div>
+      <div class="ie-slider-mock"><span>Brightness</span><span>+12</span></div>
+      <div class="ie-track mid"></div>
+      <div class="ie-slider-mock"><span>Contrast</span><span>0</span></div>
+      <div class="ie-track mid"></div>
+      <div class="ie-slider-mock"><span>Blur</span><span>3</span></div>
+      <div class="ie-track lo"></div>
+    </div>
+  </aside>
+</div>
+<div class="pv-status">
+  <span>sunset.png · modified</span>
+  <span>3024 × 2268 · 67%</span>
+</div>
