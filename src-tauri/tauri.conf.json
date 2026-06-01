@@ -13,10 +13,10 @@
     "windows": [
       {
         "title": "Image Editor",
-        "width": 1100,
-        "height": 760,
-        "minWidth": 640,
-        "minHeight": 420,
+        "width": 1296,
+        "height": 800,
+        "minWidth": 720,
+        "minHeight": 445,
         "decorations": false,
         "resizable": true,
         "center": true,
@@ -48,7 +48,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "appimage"],
+    "targets": [
+      "deb",
+      "appimage"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -60,7 +63,17 @@
     "longDescription": "A minimal, single-file image editor for Linux. Open, crop, resize, rotate, filter, and export to PNG/JPEG/WebP/BMP/TIFF.",
     "fileAssociations": [
       {
-        "ext": ["png", "jpg", "jpeg", "webp", "bmp", "tif", "tiff", "gif", "ico"],
+        "ext": [
+          "png",
+          "jpg",
+          "jpeg",
+          "webp",
+          "bmp",
+          "tif",
+          "tiff",
+          "gif",
+          "ico"
+        ],
         "name": "Image",
         "description": "Image file",
         "mimeType": "image/png;image/jpeg;image/webp;image/bmp;image/tiff;image/gif;image/x-icon",
