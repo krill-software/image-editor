@@ -1,91 +1,15 @@
-@font-face {
-  font-family: "Hasklig";
-  font-weight: 400;
-  font-style: normal;
-  font-display: block;
-  src: url("/src/assets/fonts/Hasklig-Regular.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Hasklig";
-  font-weight: 700;
-  font-style: normal;
-  font-display: block;
-  src: url("/src/assets/fonts/Hasklig-Bold.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Hasklig";
-  font-weight: 400;
-  font-style: italic;
-  font-display: block;
-  src: url("/src/assets/fonts/Hasklig-Italic.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Hasklig";
-  font-weight: 700;
-  font-style: italic;
-  font-display: block;
-  src: url("/src/assets/fonts/Hasklig-BoldItalic.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Charter";
-  font-weight: 400;
-  font-style: normal;
-  font-display: block;
-  src: url("/src/assets/fonts/Charter-Regular.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Charter";
-  font-weight: 700;
-  font-style: normal;
-  font-display: block;
-  src: url("/src/assets/fonts/Charter-Bold.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Charter";
-  font-weight: 400;
-  font-style: italic;
-  font-display: block;
-  src: url("/src/assets/fonts/Charter-Italic.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Charter";
-  font-weight: 700;
-  font-style: italic;
-  font-display: block;
-  src: url("/src/assets/fonts/Charter-BoldItalic.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-weight: 400;
-  font-style: normal;
-  font-display: block;
-  src: url("/src/assets/fonts/Inter-Regular.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter";
-  font-weight: 600;
-  font-style: normal;
-  font-display: block;
-  src: url("/src/assets/fonts/Inter-SemiBold.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter";
-  font-weight: 700;
-  font-style: normal;
-  font-display: block;
-  src: url("/src/assets/fonts/Inter-Bold.woff2") format("woff2");
-}
-
-/* Image-editor app-specific tokens. The 5 named palette colors and
- * Space-Cadet alpha rules come from @krill-software/desktop-ui. */
+/* Image-editor app-specific tokens. The 5 named palette colors, the
+ * Space-Cadet alpha rules, and the font families (Inter / Charter /
+ * JetBrains Mono via --fm-sans/serif/mono) all come from
+ * @krill-software/desktop-ui — fonts are bundled there, no local
+ * @font-face needed. */
 :root {
-  --fm-sans:  "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --fm-serif: "Charter", Georgia, "Liberation Serif", serif;
-  --fm-mono:  "Hasklig", "Source Code Pro", "JetBrains Mono", ui-monospace, monospace;
-
-  --fm-selection: rgba(221, 117, 150, 0.22); /* alpha-derived from --fm-accent */
+  --fm-selection: rgba(
+    221,
+    117,
+    150,
+    0.22
+  ); /* alpha-derived from --fm-accent */
 
   --rail-w: 260px;
 }
@@ -95,11 +19,14 @@
   text-shadow: none;
 }
 
-html, body {
+html,
+body {
   font-family: var(--fm-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "calt" 1, "liga" 1;
+  font-feature-settings:
+    "calt" 1,
+    "liga" 1;
 }
 
 /* Body grid (titlebar / aux+main / status) is owned by the package.
@@ -124,17 +51,22 @@ html, body {
   overflow: hidden;
   background-color: var(--fm-bg);
   background-image:
-    linear-gradient(45deg,  var(--fm-rule-strong) 25%, transparent 25%),
+    linear-gradient(45deg, var(--fm-rule-strong) 25%, transparent 25%),
     linear-gradient(-45deg, var(--fm-rule-strong) 25%, transparent 25%),
-    linear-gradient(45deg,  transparent 75%, var(--fm-rule-strong) 75%),
+    linear-gradient(45deg, transparent 75%, var(--fm-rule-strong) 75%),
     linear-gradient(-45deg, transparent 75%, var(--fm-rule-strong) 75%);
-  background-position: 0 0, 0 8px, 8px -8px, 8px 0;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    8px 0;
   background-size: 16px 16px;
 }
 
 #canvas-stage {
   position: absolute;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   transform-origin: 0 0;
   will-change: transform;
 }
@@ -147,14 +79,16 @@ html, body {
 
 #canvas-overlay {
   position: absolute;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   pointer-events: none;
 }
 
 /* Crop overlay */
 .crop-dim {
   position: absolute;
-  top: 0; left: 0;
+  top: 0;
+  left: 0;
   background: rgba(48, 52, 63, 0.55);
   pointer-events: none;
 }
@@ -179,7 +113,9 @@ html, body {
   display: flex;
   flex-direction: column;
 }
-.rail-section + .rail-section { margin-top: 4px; }
+.rail-section + .rail-section {
+  margin-top: 4px;
+}
 .rail-section h3 {
   font-size: 11px;
   font-weight: 600;
@@ -194,8 +130,13 @@ html, body {
  * inside their section's padded container. */
 .rail-section .row,
 .rail-section .field,
-.rail-section .checkbox { margin-left: 12px; margin-right: 12px; }
-.rail-section .row { margin-bottom: 8px; }
+.rail-section .checkbox {
+  margin-left: 12px;
+  margin-right: 12px;
+}
+.rail-section .row {
+  margin-bottom: 8px;
+}
 
 .row {
   display: flex;
@@ -203,8 +144,12 @@ html, body {
   margin-bottom: 6px;
   flex-wrap: wrap;
 }
-.row.fields { gap: 8px; }
-.row.fields > .field { flex: 1; }
+.row.fields {
+  gap: 8px;
+}
+.row.fields > .field {
+  flex: 1;
+}
 
 .rail-btn {
   flex: 1;
@@ -239,7 +184,8 @@ html, body {
   font-size: 11px;
   color: var(--fm-muted);
 }
-.field input, .field select {
+.field input,
+.field select {
   background: var(--fm-bg);
   color: var(--fm-text);
   border: 1px solid var(--fm-rule-strong);
@@ -248,7 +194,8 @@ html, body {
   font-size: 12px;
   width: 100%;
 }
-.field input:focus, .field select:focus {
+.field input:focus,
+.field select:focus {
   outline: none;
   border-color: var(--fm-accent);
 }
@@ -262,7 +209,9 @@ html, body {
   margin-bottom: 8px;
   cursor: pointer;
 }
-.checkbox input { accent-color: var(--fm-accent); }
+.checkbox input {
+  accent-color: var(--fm-accent);
+}
 
 /* Option row — one option per row. Icon + label at the top, optional
  * thumbnail preview below. The whole row is clickable. */
@@ -281,7 +230,9 @@ html, body {
   color: var(--fm-text);
   cursor: pointer;
 }
-.option-row:hover { background: var(--fm-rule); }
+.option-row:hover {
+  background: var(--fm-rule);
+}
 .option-row[data-selected="true"] {
   background: var(--fm-rule-strong);
 }
@@ -305,7 +256,9 @@ html, body {
   color: var(--fm-muted);
 }
 .option-row:hover .option-row-icon,
-.option-row[data-selected="true"] .option-row-icon { color: var(--fm-text); }
+.option-row[data-selected="true"] .option-row-icon {
+  color: var(--fm-text);
+}
 .option-row-label {
   font-size: 13px;
   color: var(--fm-text);
@@ -322,10 +275,14 @@ html, body {
   align-items: center;
   justify-content: center;
   background:
-    linear-gradient(45deg, rgba(48,52,63,0.08) 25%, transparent 25%) 0 0 / 8px 8px,
-    linear-gradient(-45deg, rgba(48,52,63,0.08) 25%, transparent 25%) 0 4px / 8px 8px,
-    linear-gradient(45deg, transparent 75%, rgba(48,52,63,0.08) 75%) 4px -4px / 8px 8px,
-    linear-gradient(-45deg, transparent 75%, rgba(48,52,63,0.08) 75%) 4px 0 / 8px 8px,
+    linear-gradient(45deg, rgba(48, 52, 63, 0.08) 25%, transparent 25%) 0 0 /
+      8px 8px,
+    linear-gradient(-45deg, rgba(48, 52, 63, 0.08) 25%, transparent 25%) 0 4px /
+      8px 8px,
+    linear-gradient(45deg, transparent 75%, rgba(48, 52, 63, 0.08) 75%)
+      4px -4px / 8px 8px,
+    linear-gradient(-45deg, transparent 75%, rgba(48, 52, 63, 0.08) 75%) 4px 0 /
+      8px 8px,
     var(--fm-bg);
   border-radius: 3px;
   overflow: hidden;
@@ -350,7 +307,10 @@ html, body {
   gap: 8px;
   margin-bottom: 6px;
 }
-.slider-row-head .option-row-label { flex: 1; min-width: 0; }
+.slider-row-head .option-row-label {
+  flex: 1;
+  min-width: 0;
+}
 .slider-row-value {
   font-family: var(--fm-mono);
   font-size: 11px;
@@ -370,7 +330,9 @@ html, body {
 
 body[data-mode="preview"] #titlebar,
 body[data-mode="preview"] #aux,
-body[data-mode="preview"] #status-line { display: none; }
+body[data-mode="preview"] #status-line {
+  display: none;
+}
 body[data-mode="preview"] {
   grid-template-columns: 1fr;
   grid-template-areas: "main";
