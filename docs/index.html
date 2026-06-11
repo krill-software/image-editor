@@ -33,26 +33,131 @@ mock:
   state: '3024 × 2268 · 67%'
 ---
 <style>
-  .ie-editor-pane {
+  /* Left tool rail + right canvas — mirrors the real app: the rail is
+   * the left aux pane, the canvas viewport sits to its right. The rail
+   * is one option per row (icon + label + a small preview thumbnail),
+   * grouped into Transform / Filters / Adjust. */
+  .ie-app {
     display: grid;
-    grid-template-columns: 1fr 220px;
-    min-height: 360px;
+    grid-template-columns: 250px 1fr;
+    min-height: 380px;
   }
-  .ie-canvas-area {
-    position: relative;
+  .ie-rail {
+    border-right: 1px solid var(--rule-strong);
+    padding: 6px 0 12px;
+    font-family: var(--sans);
+    overflow: hidden;
+  }
+  .ie-sec { padding: 10px 0 4px; }
+  .ie-sec + .ie-sec { border-top: 1px solid var(--rule); }
+  .ie-sec-h {
+    margin: 0 0 4px;
+    padding: 0 16px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .ie-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 7px 16px;
+    background: none;
+    border: none;
+    text-align: left;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+  }
+  .ie-row svg { flex: none; width: 15px; height: 15px; color: var(--muted); }
+  .ie-row .lbl { flex: 1 1 auto; }
+  .ie-row.sel { color: var(--accent); }
+  .ie-row.sel svg { color: var(--accent); }
+
+  /* Preview thumbnail — a tiny facsimile of the photo with the row's
+   * transform / filter applied, the way the real rail paints them. */
+  .ie-thumb {
+    flex: none;
+    width: 50px;
+    height: 36px;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--rule-strong);
+  }
+  .ie-pic {
+    display: block;
+    width: 100%;
+    height: 100%;
     background:
-      linear-gradient(45deg, rgba(48, 52, 63, 0.06) 25%, transparent 25%) 0 0 / 14px 14px,
-      linear-gradient(-45deg, rgba(48, 52, 63, 0.06) 25%, transparent 25%) 0 7px / 14px 14px,
-      linear-gradient(45deg, transparent 75%, rgba(48, 52, 63, 0.06) 75%) 7px -7px / 14px 14px,
-      linear-gradient(-45deg, transparent 75%, rgba(48, 52, 63, 0.06) 75%) 7px 0 / 14px 14px,
-      var(--bg);
+      radial-gradient(circle at 26% 30%, rgba(255, 130, 191, 0.6) 0%, transparent 38%),
+      radial-gradient(circle at 76% 66%, rgba(221, 117, 150, 0.5) 0%, transparent 46%),
+      linear-gradient(135deg, var(--ink) 0%, var(--muted) 100%);
+  }
+  .ie-pic.rl { transform: rotate(-90deg) scale(1.34); }
+  .ie-pic.rr { transform: rotate(90deg) scale(1.34); }
+  .ie-pic.r180 { transform: rotate(180deg); }
+  .ie-pic.fh { transform: scaleX(-1); }
+  .ie-pic.fv { transform: scaleY(-1); }
+  .ie-pic.bw { filter: grayscale(1); }
+  .ie-pic.sep { filter: sepia(0.85) saturate(1.1); }
+  .ie-pic.inv { filter: invert(1); }
+
+  /* Adjust sliders — label + tabular value on one line, track beneath. */
+  .ie-adj { padding: 7px 16px 9px; }
+  .ie-adj-top {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    font-size: 13px;
+    color: var(--ink);
+    margin-bottom: 7px;
+  }
+  .ie-adj-top svg { flex: none; width: 15px; height: 15px; color: var(--muted); }
+  .ie-adj-top .lbl { flex: 1 1 auto; }
+  .ie-adj-top .val {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .ie-track {
+    height: 3px;
+    background: var(--rule-strong);
+    border-radius: 2px;
+    position: relative;
+  }
+  .ie-track::after {
+    content: "";
+    position: absolute;
+    top: -4.5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    left: calc(50% - 6px);
+  }
+  .ie-track.lo::after { left: 0; }
+
+  /* Canvas viewport — transparency checkerboard, image centered. */
+  .ie-canvas {
+    position: relative;
     display: grid;
     place-items: center;
-    padding: 28px;
+    padding: 30px;
+    background:
+      linear-gradient(45deg, var(--rule) 25%, transparent 25%) 0 0 / 16px 16px,
+      linear-gradient(-45deg, var(--rule) 25%, transparent 25%) 0 8px / 16px 16px,
+      linear-gradient(45deg, transparent 75%, var(--rule) 75%) 8px -8px / 16px 16px,
+      linear-gradient(-45deg, transparent 75%, var(--rule) 75%) 8px 0 / 16px 16px,
+      var(--bg);
   }
   .ie-photo {
-    width: 78%;
-    max-width: 380px;
+    width: 76%;
+    max-width: 360px;
     aspect-ratio: 4 / 3;
     border-radius: 4px;
     background:
@@ -60,118 +165,114 @@ mock:
       radial-gradient(circle at 75% 65%, rgba(221, 117, 150, 0.5) 0%, transparent 45%),
       linear-gradient(135deg, var(--ink) 0%, var(--muted) 100%);
     box-shadow: 0 12px 28px rgba(48, 52, 63, 0.22);
-    position: relative;
   }
-  .ie-photo::after {
-    content: "";
-    position: absolute;
-    inset: 12% 18% 22% 14%;
-    border: 1px solid var(--accent);
-    box-shadow: 0 0 0 1px rgba(250, 250, 255, 0.6) inset,
-      0 0 0 9999px rgba(48, 52, 63, 0.45);
-    clip-path: polygon(
-      -1000% -1000%, 1000% -1000%, 1000% 1000%, -1000% 1000%
-    );
-    pointer-events: none;
-  }
-  .ie-rail {
-    background: var(--panel);
-    border-left: 1px solid var(--rule);
-    padding: 18px;
-    font-size: 12px;
-    font-family: var(--mono);
-  }
-  .ie-rail-h {
-    font-size: 10.5px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin: 0 0 8px;
-  }
-  .ie-rail-section { margin-bottom: 18px; }
-  .ie-rail-row { display: flex; gap: 6px; margin-bottom: 6px; }
-  .ie-rail-btn {
-    flex: 1;
-    text-align: center;
-    background: var(--bg);
-    border: 1px solid var(--rule-strong);
-    border-radius: 5px;
-    padding: 6px 6px;
-    color: var(--ink);
-  }
-  .ie-rail-btn.primary {
-    background: var(--accent);
-    color: var(--bg);
-    border-color: var(--accent);
-    font-weight: 600;
-  }
-  .ie-slider-mock {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10.5px;
-    color: var(--muted);
-    margin-bottom: 4px;
-  }
-  .ie-slider-mock + .ie-track {
-    height: 3px;
-    background: var(--panel-2);
-    border-radius: 2px;
-    position: relative;
-    margin-bottom: 12px;
-  }
-  .ie-slider-mock + .ie-track::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: -4px;
-    width: 11px;
-    height: 11px;
-    border-radius: 50%;
-    background: var(--accent);
-  }
-  .ie-slider-mock + .ie-track.mid::after { left: calc(50% - 5px); }
-  .ie-slider-mock + .ie-track.lo::after  { left: 18%; }
 
   @media (max-width: 720px) {
-    .ie-editor-pane { grid-template-columns: 1fr; }
+    .ie-app { grid-template-columns: 1fr; }
     .ie-rail { display: none; }
   }
 </style>
-<div class="ie-editor-pane">
-  <div class="ie-canvas-area">
+<div class="ie-app">
+  <aside class="ie-rail">
+    <section class="ie-sec">
+      <h4 class="ie-sec-h">Transform</h4>
+      <button class="ie-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
+        <span class="lbl">Rotate 90° left</span>
+        <span class="ie-thumb"><span class="ie-pic rl"></span></span>
+      </button>
+      <button class="ie-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 4v5h-5"/></svg>
+        <span class="lbl">Rotate 90° right</span>
+        <span class="ie-thumb"><span class="ie-pic rr"></span></span>
+      </button>
+      <button class="ie-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12a10 10 0 0 1 20 0M12 22v-4"/></svg>
+        <span class="lbl">Rotate 180°</span>
+        <span class="ie-thumb"><span class="ie-pic r180"></span></span>
+      </button>
+      <button class="ie-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></svg>
+        <span class="lbl">Flip horizontal</span>
+        <span class="ie-thumb"><span class="ie-pic fh"></span></span>
+      </button>
+      <button class="ie-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8 4-4 4 4M7 4v16M21 16l-4 4-4-4M17 20V4"/></svg>
+        <span class="lbl">Flip vertical</span>
+        <span class="ie-thumb"><span class="ie-pic fv"></span></span>
+      </button>
+      <button class="ie-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+        <span class="lbl">Crop…</span>
+      </button>
+      <button class="ie-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h6v6H3zM21 21v-6h-6M21 21l-7-7"/></svg>
+        <span class="lbl">Resize…</span>
+      </button>
+    </section>
+
+    <section class="ie-sec">
+      <h4 class="ie-sec-h">Filters</h4>
+      <button class="ie-row sel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+        <span class="lbl">None</span>
+        <span class="ie-thumb"><span class="ie-pic"></span></span>
+      </button>
+      <button class="ie-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v20" fill="currentColor"/></svg>
+        <span class="lbl">Black &amp; white</span>
+        <span class="ie-thumb"><span class="ie-pic bw"></span></span>
+      </button>
+      <button class="ie-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4a6 6 0 0 0-8 8 6 6 0 0 0 8 8"/><path d="M22 12a6 6 0 0 1-8 8 6 6 0 0 1-8-8 6 6 0 0 1 8-8 6 6 0 0 1 8 8z"/></svg>
+        <span class="lbl">Sepia</span>
+        <span class="ie-thumb"><span class="ie-pic sep"></span></span>
+      </button>
+      <button class="ie-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20Z" fill="currentColor"/></svg>
+        <span class="lbl">Invert</span>
+        <span class="ie-thumb"><span class="ie-pic inv"></span></span>
+      </button>
+    </section>
+
+    <section class="ie-sec">
+      <h4 class="ie-sec-h">Adjust</h4>
+      <div class="ie-adj">
+        <div class="ie-adj-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <span class="lbl">Brightness</span>
+          <span class="val">0</span>
+        </div>
+        <div class="ie-track"></div>
+      </div>
+      <div class="ie-adj">
+        <div class="ie-adj-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 18a6 6 0 0 0 0-12z" fill="currentColor"/></svg>
+          <span class="lbl">Contrast</span>
+          <span class="val">0</span>
+        </div>
+        <div class="ie-track"></div>
+      </div>
+      <div class="ie-adj">
+        <div class="ie-adj-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5-2 1.6-3 3.5-3 5.5a7 7 0 0 0 7 7z"/></svg>
+          <span class="lbl">Saturation</span>
+          <span class="val">0</span>
+        </div>
+        <div class="ie-track"></div>
+      </div>
+      <div class="ie-adj">
+        <div class="ie-adj-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v20" stroke-dasharray="2 2"/></svg>
+          <span class="lbl">Blur</span>
+          <span class="val">0</span>
+        </div>
+        <div class="ie-track lo"></div>
+      </div>
+    </section>
+  </aside>
+
+  <div class="ie-canvas">
     <div class="ie-photo"></div>
   </div>
-  <aside class="ie-rail">
-    <div class="ie-rail-section">
-      <h4 class="ie-rail-h">Transform</h4>
-      <div class="ie-rail-row">
-        <span class="ie-rail-btn">⟲</span>
-        <span class="ie-rail-btn">⟳</span>
-        <span class="ie-rail-btn">180°</span>
-      </div>
-      <div class="ie-rail-row">
-        <span class="ie-rail-btn">Flip H</span>
-        <span class="ie-rail-btn">Flip V</span>
-      </div>
-      <div class="ie-rail-row">
-        <span class="ie-rail-btn">Resize…</span>
-        <span class="ie-rail-btn primary">Crop…</span>
-      </div>
-    </div>
-    <div class="ie-rail-section">
-      <h4 class="ie-rail-h">Filters</h4>
-      <div class="ie-rail-row">
-        <span class="ie-rail-btn">B / W</span>
-        <span class="ie-rail-btn">Sepia</span>
-        <span class="ie-rail-btn">Invert</span>
-      </div>
-      <div class="ie-slider-mock"><span>Brightness</span><span>+12</span></div>
-      <div class="ie-track mid"></div>
-      <div class="ie-slider-mock"><span>Contrast</span><span>0</span></div>
-      <div class="ie-track mid"></div>
-      <div class="ie-slider-mock"><span>Blur</span><span>3</span></div>
-      <div class="ie-track lo"></div>
-    </div>
-  </aside>
 </div>
