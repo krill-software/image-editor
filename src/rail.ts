@@ -149,7 +149,7 @@ interface OptionRowSpec {
   onClick: () => void;
 }
 
-const THUMB_SIZE = 56;
+const THUMB_SIZE = 37;
 
 function optionRow(spec: OptionRowSpec): HTMLElement {
   const row = document.createElement("button");
